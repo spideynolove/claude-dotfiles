@@ -1,0 +1,11 @@
+# Claude Code managed — never commit
+.claude/plugins/
+.claude/projects/
+.claude/backups/
+.claude/cache/
+.claude/debug/
+.claude/file-history/
+.claude/.credentials.json
+
+# Machine-specific MCP paths
+.mcporter/
