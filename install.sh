@@ -5,7 +5,7 @@
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)/.claude"
 TARGET="$HOME/.claude"
 
-mkdir -p "$TARGET/agents" "$TARGET/hooks" "$TARGET/skills"
+mkdir -p "$TARGET/agents" "$TARGET/hooks" "$TARGET/skills" "$TARGET/commands"
 
 for f in "$REPO_DIR/agents/"*.md; do
   ln -sf "$f" "$TARGET/agents/$(basename "$f")"
@@ -23,6 +23,11 @@ for f in "$REPO_DIR/hooks/"*; do
   ln -sf "$f" "$TARGET/hooks/$(basename "$f")"
   chmod +x "$f"
   echo "linked hooks/$(basename "$f")"
+done
+
+for f in "$REPO_DIR/commands/"*.md; do
+  ln -sf "$f" "$TARGET/commands/$(basename "$f")"
+  echo "linked commands/$(basename "$f")"
 done
 
 ln -sf "$REPO_DIR/CLAUDE.md" "$TARGET/CLAUDE.md"
