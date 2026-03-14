@@ -6,7 +6,12 @@ MARKER="/tmp/claude-kg-$SESSION_ID"
 [ -f "$MARKER" ] && exit 0
 
 AIM_FILES=(.aim/memory*.jsonl)
-[ ! -e "${AIM_FILES[0]}" ] && exit 0
+[ ! -e "${AIM_FILES[0]}" ] && {
+  if [ -f .aim/roles.json ]; then
+    echo "[roles] $(python3 -c "import json; r=json.load(open('.aim/roles.json')); print(f\"{r['project_type']}: {', '.join(x['id'] for x in r['roles'])}\")" 2>/dev/null)"
+  fi
+  exit 0
+}
 
 touch "$MARKER"
 
@@ -15,15 +20,15 @@ import json, sys, glob
 entities, relations = [], []
 for path in sorted(glob.glob('.aim/memory*.jsonl')):
     with open(path) as f:
-    for line in f:
-        line = line.strip()
-        if not line: continue
-        try:
-            obj = json.loads(line)
-            t = obj.get('type')
-            if t == 'entity': entities.append(obj)
-            elif t == 'relation': relations.append(obj)
-        except: pass
+        for line in f:
+            line = line.strip()
+            if not line: continue
+            try:
+                obj = json.loads(line)
+                t = obj.get('type')
+                if t == 'entity': entities.append(obj)
+                elif t == 'relation': relations.append(obj)
+            except: pass
 
 if not entities:
     sys.exit(0)
@@ -36,6 +41,10 @@ if len(entities) > 15:
     print(f'  ... {len(entities)-15} more entities')
 print(f'  {len(relations)} relations indexed')
 " 2>/dev/null
+
+if [ -f .aim/roles.json ]; then
+  echo "[roles] $(python3 -c "import json; r=json.load(open('.aim/roles.json')); print(f\"{r['project_type']}: {', '.join(x['id'] for x in r['roles'])}\")" 2>/dev/null)"
+fi
 
 if [ -f ".claude/handoff.md" ]; then
   echo ""

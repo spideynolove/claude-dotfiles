@@ -14,12 +14,17 @@ Check availability with `which <cli>` before attempting each.
 qwen -p "<task>"
 ```
 
-### 2. codex
+### 2. kimi
+```bash
+kimi --print -p "<task>" -y -o text
+```
+
+### 3. codex
 ```bash
 codex "<task>"
 ```
 
-### 3. mcporter (always available)
+### 4. mcporter (always available)
 ```bash
 npx mcporter call '<server>.<tool>(<params>)'
 ```
