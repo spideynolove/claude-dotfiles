@@ -1,0 +1,5 @@
+{
+  "name": "claude-compat",
+  "description": "Ports ~/.claude/ context-loader hook and agent patterns to Gemini CLI",
+  "version": "1.0.0"
+}

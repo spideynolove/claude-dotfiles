@@ -17,11 +17,6 @@ Generate a CLAUDE.md file for the current project using an external AI CLI.
    which qwen && qwen --approval-mode full-auto -p "Read the codebase at $(pwd). Generate a CLAUDE.md with: project description, build/test/lint commands, architecture overview, code conventions. Write it to CLAUDE.md."
    ```
 
-   **c) kimi**
-   ```bash
-   which kimi && kimi --print -p "Read the codebase at $(pwd). Generate a CLAUDE.md with: project description, build/test/lint commands, architecture overview, code conventions. Write it to CLAUDE.md." -y -o text
-   ```
-
 3. After each attempt, check if `CLAUDE.md` was created:
    ```bash
    [ -f CLAUDE.md ] && echo "CLAUDE.md generated successfully"
