@@ -9,27 +9,17 @@ You are an MCP execution agent. Execute the task given to you. Keep your context
 
 Check availability with `which <cli>` before attempting each.
 
-### 1. gemini-cli
-```bash
-gemini -y -m gemini-2.5-flash -p "<task>"
-```
-
-### 2. kimi
-```bash
-kimi -p "<task>"
-```
-
-### 3. qwen-code
+### 1. qwen-code
 ```bash
 qwen -p "<task>"
 ```
 
-### 4. codex
+### 2. codex
 ```bash
 codex "<task>"
 ```
 
-### 5. mcporter (always available)
+### 3. mcporter (always available)
 ```bash
 npx mcporter call '<server>.<tool>(<params>)'
 ```
