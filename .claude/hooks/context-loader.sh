@@ -37,4 +37,10 @@ if len(entities) > 15:
 print(f'  {len(relations)} relations indexed')
 " 2>/dev/null
 
+if [ -f ".claude/handoff.md" ]; then
+  echo ""
+  echo "[handoff] Resuming from previous session:"
+  cat ".claude/handoff.md"
+fi
+
 exit 0
