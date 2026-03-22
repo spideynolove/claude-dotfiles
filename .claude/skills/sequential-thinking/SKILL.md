@@ -280,6 +280,9 @@ mcporter call sequential-thinking.record_decision(
 - Using `dependencies` param in `add_thought` — broken for non-empty values
 - Tool-first thinking — define what to understand before calling tools
 - Comments or docstrings in stored code patterns
+- Space-separated `key:value` syntax — use `(param: "value")` notation; space-separated args silently fail with `'content' is a required property`
+- Passing `session_id` to `add_thought` — session is implicit, no such param
+- Using `session_type: "analysis"` — valid values are `general`, `coding`, `memory` only
 
 ## Key Insight
 
