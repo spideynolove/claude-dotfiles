@@ -2,7 +2,7 @@
 
 **Xỉa** (Vietnamese): to borrow/take something from others and use it in your own product.
 
-This command implements the core learning strategy of this project: find a GitHub repo with a pattern worth learning, analyze it deeply, extract the valuable insight, and adapt it into a reusable skill.
+This command implements a **comparative borrowing** strategy: understand your own codebase A, analyze foreign repo B, identify what A is missing that B solves well, and synthesize a more complete AB. Repeat with C, D... to build ABCD.
 
 ## Usage
 
@@ -11,58 +11,85 @@ This command implements the core learning strategy of this project: find a GitHu
 ```
 
 - `<github-repo>`: GitHub URL or `user/repo` shorthand
-- `[focus]`: Optional — specific aspect to focus on (e.g., "hook system", "agent orchestration", "prompt engineering")
+- `[focus]`: Optional — specific aspect to focus on (e.g., "hook system", "agent memory", "prompt engineering")
 
 ## Workflow
 
-### Phase 1 — Ingest
+### Phase 0 — Know A (your current codebase)
 
-Pack the remote repository using repomix:
+Before looking at B, understand what A already has and where its gaps are.
+
+```
+mcporter call repomix.pack_codebase(directory: ".", compress: true)
+```
+
+Also read `~/.claude/XIALOGUE.md` to understand the **evolved state** of A — what has already been borrowed from prior Xỉa sessions. A is not the original codebase; it is A + all prior Xỉa results.
+
+Then run a brief sequential-thinking analysis of A:
+```
+npx mcporter call "sequential-thinking.start_session(problem: \"What does A currently do well, and where are its gaps?\", success_criteria: \"Clear gap list to compare against B\", session_type: \"coding\")"
+```
+
+Add one thought cataloguing A's capabilities and known weaknesses.
+
+### Phase 1 — Ingest B
+
+Pack the remote repository:
 
 ```
 mcporter call repomix.pack_remote_repository(remote: "$ARGUMENTS", compress: true)
 ```
 
-If the user provided a focus keyword, also grep for it immediately:
+If a focus keyword was provided, grep immediately:
 ```
 mcporter call repomix.grep_repomix_output(outputId: "<id>", pattern: "<focus>")
 ```
 
-### Phase 2 — Understand
+### Phase 2 — Compare A vs B
 
-Run a sequential-thinking analysis with 3 branches:
+Create a **gap-analysis branch** in the active session:
 
-1. **Architecture branch**: How is the project structured? What are the key modules and how do they connect?
-2. **Patterns branch**: What non-obvious patterns does this repo use? Hooks, conventions, abstractions?
-3. **Techniques branch**: What specific techniques are worth borrowing? What Claude Code / AI patterns are demonstrated?
+```
+npx mcporter call "sequential-thinking.create_branch(name: \"gap-analysis\", from_thought: \"<last-thought-id>\", purpose: \"Compare A capabilities against B to find what is worth borrowing\")"
+```
 
-Use `start_session` with `session_type: "coding"` and add one thought per branch using `create_branch`.
+For each analysis dimension, add a thought:
 
-### Phase 3 — Dialogue
+1. **What does B solve that A doesn't?** — B's unique capabilities relative to A's gaps
+2. **What does A do better than B?** — don't borrow what A already handles well
+3. **Integration friction** — what from B can merge cleanly vs. what would conflict with A's existing patterns?
 
-After analysis, ask the user:
+Score each candidate by: **value** (how much does A improve?) × **friction** (how hard to integrate?).
 
-> "I've analyzed `[repo]`. Here are the 3 most borrowable insights:
-> 1. [insight]
-> 2. [insight]
-> 3. [insight]
+### Phase 3 — Targeted Dialogue
+
+Present the comparative findings, not just a list of B's features:
+
+> "A currently lacks: [X, Y, Z].
+> B addresses: X well (low friction), Y partially (medium friction), Z (high friction — conflicts with A's [pattern]).
 >
-> Which would you like to Xỉa? Or describe what you want to extract."
+> Recommended Xỉa targets: X first, then Y.
+> Skip Z for now — here's why: [reason].
+>
+> Confirm, or tell me which to focus on."
+
+Wait for user confirmation before proceeding.
 
 ### Phase 4 — Adapt
 
-Transform the chosen insight into the user's project context:
-- Rename to match local conventions
+Transform the chosen insight into A's context:
+- Rename to match A's conventions
 - Strip what doesn't apply
-- Identify where in the current project this could plug in (the **seam detection** problem)
+- Identify where in A this plugs in (the **seam detection** problem)
 
-**If GitNexus is indexed for this project** (`.gitnexus/` exists), use it for seam detection:
+**If GitNexus is indexed** (`.gitnexus/` exists in the project), use it for seam detection:
 ```
 gitnexus_query --symbol "<relevant-local-symbol>"
 gitnexus_context --file "<proposed-integration-file>"
 gitnexus_impact --symbol "<symbol-to-be-changed>" --depth 2
 ```
-This finds the exact call sites and integration points where the borrowed pattern attaches. Skip if GitNexus is not set up — describe integration points manually instead.
+
+Skip if GitNexus is not set up — describe integration points manually using the packed A output from Phase 0.
 
 ### Phase 5 — Save
 
@@ -81,6 +108,7 @@ type: learned
 **Source**: [repo URL]
 **Extracted**: [date]
 **Focus**: [what was borrowed]
+**Gap filled**: [what A was missing that this addresses]
 
 ## What this is
 
@@ -88,7 +116,7 @@ type: learned
 
 ## Why it's valuable
 
-[Why this is worth borrowing]
+[Why this fills A's gap better than alternatives]
 
 ## The pattern
 
@@ -96,26 +124,27 @@ type: learned
 
 ## How to apply here
 
-[Concrete application in this project's context]
+[Concrete application in this project's context, referencing A's specific files/symbols]
 
 ## Original context
 
-[How the source repo used it]
+[How source repo B used it]
 ```
 
 ### Phase 6 — Log
 
-Append to `~/.claude/XIALOGUE.md` (provenance log):
+Append to `~/.claude/XIALOGUE.md`:
 
 ```
-| [date] | [repo] | [pattern] | [saved-to] |
+| [date] | [repo] | [pattern] | [gap filled] | [saved-to] |
 ```
 
-If `XIALOGUE.md` doesn't exist, create it with a header table first.
+The XIALOGUE.md is A's **evolution log** — each row represents one step in the A → AB → ABC chain. When Phase 0 runs in a future session, it reads this log to understand the current evolved state of A.
 
 ## Notes
 
 - Do NOT copy code verbatim — the goal is understanding and adaptation
 - One Xỉa session = one focused pattern (not the whole repo)
+- Phase 0 is skipped if the working directory has no meaningful codebase (e.g., you're in a scratch folder) — in that case, B-only analysis runs
 - If the repo is very large, use `compress: true` and grep before reading full output
-- Chain multiple `/xia` calls for multiple patterns from the same repo
+- Chain multiple `/xia` calls to build: A → AB → ABC → ABCD
