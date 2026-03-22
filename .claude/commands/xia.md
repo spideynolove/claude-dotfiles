@@ -11,26 +11,44 @@ This command implements a **comparative borrowing** strategy: understand your ow
 ```
 
 - `<github-repo>`: GitHub URL or `user/repo` shorthand
-- `[focus]`: Optional — specific aspect to focus on (e.g., "hook system", "agent memory", "prompt engineering")
+- `[focus]`: Optional — specific aspect to focus on (e.g., "hook system", "agent memory")
+
+## Storage convention
+
+Xỉa state is **project-local**, stored in the repository itself:
+
+```
+<project-root>/
+└── .claude/
+    └── xia/
+        ├── XIALOGUE.md        ← evolution log (committed to git)
+        └── patterns/
+            └── xia-repo-B-pattern.md
+```
+
+**Why project-local?** `~/.claude` is machine-local and not in git — it mixes all projects together and disappears when you move to another PC. `.claude/xia/` travels with the repo: clone on any machine and the full Xỉa history is immediately available.
+
+The global `~/.claude/skills/learned/` is optionally used only for patterns generic enough to be useful across ALL projects.
 
 ## Workflow
 
-### Phase 0 — Know A (your current codebase)
+### Phase 0 — Know A (current state of this project)
 
-Before looking at B, understand what A already has and where its gaps are.
+Check `.claude/xia/XIALOGUE.md` in the current working directory:
+
+- **File missing** → first Xỉa session on this project. A = raw codebase with no prior borrows.
+- **File exists** → read the "Current evolved state of A" summary at the top. This tells you what A already has from prior sessions without replaying every session.
+
+Then pack the local codebase for gap analysis:
 
 ```
 mcporter call repomix.pack_codebase(directory: ".", compress: true)
 ```
 
-Also read `~/.claude/XIALOGUE.md` to understand the **evolved state** of A — what has already been borrowed from prior Xỉa sessions. A is not the original codebase; it is A + all prior Xỉa results.
-
-Then run a brief sequential-thinking analysis of A:
+Run a brief sequential-thinking analysis:
 ```
-npx mcporter call "sequential-thinking.start_session(problem: \"What does A currently do well, and where are its gaps?\", success_criteria: \"Clear gap list to compare against B\", session_type: \"coding\")"
+npx mcporter call "sequential-thinking.start_session(problem: \"What does A currently do well, and where are its gaps?\", success_criteria: \"Gap list to compare against B\", session_type: \"coding\")"
 ```
-
-Add one thought cataloguing A's capabilities and known weaknesses.
 
 ### Phase 1 — Ingest B
 
@@ -42,7 +60,7 @@ mcporter call repomix.pack_remote_repository(remote: "$ARGUMENTS", compress: tru
 
 If a focus keyword was provided, grep immediately:
 ```
-mcporter call repomix.grep_repomix_output(outputId: "<id>", pattern: "<focus>")
+Grep(pattern: "<focus>", path: "<outputFilePath>")
 ```
 
 ### Phase 2 — Compare A vs B
@@ -50,20 +68,20 @@ mcporter call repomix.grep_repomix_output(outputId: "<id>", pattern: "<focus>")
 Create a **gap-analysis branch** in the active session:
 
 ```
-npx mcporter call "sequential-thinking.create_branch(name: \"gap-analysis\", from_thought: \"<last-thought-id>\", purpose: \"Compare A capabilities against B to find what is worth borrowing\")"
+npx mcporter call "sequential-thinking.create_branch(name: \"gap-analysis\", from_thought: \"<last-thought-id>\", purpose: \"Compare A vs B to find what is worth borrowing\")"
 ```
 
 For each analysis dimension, add a thought:
 
 1. **What does B solve that A doesn't?** — B's unique capabilities relative to A's gaps
 2. **What does A do better than B?** — don't borrow what A already handles well
-3. **Integration friction** — what from B can merge cleanly vs. what would conflict with A's existing patterns?
+3. **Integration friction** — what from B can merge cleanly vs. what conflicts with A's patterns?
 
 Score each candidate by: **value** (how much does A improve?) × **friction** (how hard to integrate?).
 
 ### Phase 3 — Targeted Dialogue
 
-Present the comparative findings, not just a list of B's features:
+Present the comparative findings:
 
 > "A currently lacks: [X, Y, Z].
 > B addresses: X well (low friction), Y partially (medium friction), Z (high friction — conflicts with A's [pattern]).
@@ -80,71 +98,96 @@ Wait for user confirmation before proceeding.
 Transform the chosen insight into A's context:
 - Rename to match A's conventions
 - Strip what doesn't apply
-- Identify where in A this plugs in (the **seam detection** problem)
+- Identify where in A this plugs in (seam detection)
 
-**If GitNexus is indexed** (`.gitnexus/` exists in the project), use it for seam detection:
+**If GitNexus is indexed** (`.gitnexus/` exists), use it for seam detection:
 ```
 gitnexus_query --symbol "<relevant-local-symbol>"
-gitnexus_context --file "<proposed-integration-file>"
 gitnexus_impact --symbol "<symbol-to-be-changed>" --depth 2
 ```
 
-Skip if GitNexus is not set up — describe integration points manually using the packed A output from Phase 0.
+Skip if GitNexus is not set up — describe integration points manually using the Phase 0 packed output.
 
-### Phase 5 — Save
+### Phase 5 — Save (project-local)
 
-Write the extracted pattern to `~/.claude/skills/learned/xia-[repo-slug]-[pattern].md`:
+Write the extracted pattern to `.claude/xia/patterns/xia-[repo-slug]-[pattern].md`:
 
 ```markdown
 ---
 name: xia-[repo-slug]-[pattern]
 source: https://github.com/[repo]
 extracted: [date]
-type: learned
 ---
 
 # [Pattern Name] — Xỉa from [repo]
 
 **Source**: [repo URL]
 **Extracted**: [date]
-**Focus**: [what was borrowed]
 **Gap filled**: [what A was missing that this addresses]
 
 ## What this is
 
-[2-3 sentence description of the pattern]
+[2-3 sentence description]
 
-## Why it's valuable
+## Why it fills A's gap
 
-[Why this fills A's gap better than alternatives]
+[Why this addresses the specific gap identified in Phase 2]
 
 ## The pattern
 
-[Core code or pseudocode]
+[Core code or pseudocode — no comments, no docstrings]
 
 ## How to apply here
 
-[Concrete application in this project's context, referencing A's specific files/symbols]
+[Concrete application in this project, referencing A's specific files/symbols]
 
 ## Original context
 
 [How source repo B used it]
 ```
 
-### Phase 6 — Log
+Optionally also save to `~/.claude/skills/learned/` if the pattern is generic enough to apply to other projects.
 
-Append to `~/.claude/XIALOGUE.md`:
+### Phase 6 — Log (update XIALOGUE.md)
+
+Update `.claude/xia/XIALOGUE.md` with two things:
+
+**1. Update the "Current evolved state of A" summary at the top** — revise the prose to reflect what A can now do after this borrow. This is what Phase 0 reads on the next session (possibly from a different PC).
+
+**2. Append a row to the borrow table:**
 
 ```
-| [date] | [repo] | [pattern] | [gap filled] | [saved-to] |
+| [date] | [repo] | [pattern] | [gap filled] | .claude/xia/patterns/[file] |
 ```
 
-The XIALOGUE.md is A's **evolution log** — each row represents one step in the A → AB → ABC chain. When Phase 0 runs in a future session, it reads this log to understand the current evolved state of A.
+If `.claude/xia/XIALOGUE.md` does not exist, create it using this template:
 
-## Notes
+```markdown
+# XIALOGUE — [Project Name]
 
-- Do NOT copy code verbatim — the goal is understanding and adaptation
-- One Xỉa session = one focused pattern (not the whole repo)
-- Phase 0 is skipped if the working directory has no meaningful codebase (e.g., you're in a scratch folder) — in that case, B-only analysis runs
-- If the repo is very large, use `compress: true` and grep before reading full output
-- Chain multiple `/xia` calls to build: A → AB → ABC → ABCD
+## Current evolved state of A
+
+[One paragraph describing what this project currently does, what patterns it uses,
+and what has been borrowed so far. Written as present-tense capability description.
+Update this summary after every Xỉa session.]
+
+*First Xỉa session — no prior borrows.*
+
+---
+
+## Borrow history
+
+| Date | Source | Pattern | Gap filled | Saved to |
+|------|--------|---------|------------|----------|
+```
+
+## Commit after each session
+
+After Phase 6, the `.claude/xia/` directory should be committed:
+
+```bash
+git add .claude/xia/
+git commit -m "xia: borrow [pattern] from [repo]"
+```
+
+This makes the Xỉa state available on every machine that pulls the repo.
