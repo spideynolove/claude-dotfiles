@@ -39,6 +39,11 @@ State the correction factually and move on.
   - ❌ Docstrings in chat/code blocks                                                                 
   - ❌ Comments in chat/code blocks
 
+## Git Commits
+- NEVER create git commits automatically after completing a task
+- ONLY commit when explicitly asked by the user
+- Do not suggest committing unless the user asks
+
 ## Common Env
 
 ### Local Python Dev
