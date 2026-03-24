@@ -1,8 +1,33 @@
 # /xia — Borrow and Adapt from GitHub Projects
 
-**Xỉa** (Vietnamese): to borrow/take something from others and use it in your own product.
+**Xỉa** (Vietnamese): borrow/take something from others and use it in your own product.
 
-This command implements a **comparative borrowing** strategy: understand your own codebase A, analyze foreign repo B, identify what A is missing that B solves well, and synthesize a more complete AB. Repeat with C, D... to build ABCD.
+This is a **protocol**, not a workflow description. Follow each phase exactly. Output templates are mandatory — fill them in, do not paraphrase or reformat them.
+
+---
+
+## CONSTRAINTS — Read before writing any code
+
+**Step 1: Read the project coding rules.**
+
+```
+Read(file_path: "~/.claude/CLAUDE.md")
+```
+
+Extract and list every coding constraint found. These apply to ALL code written in this session. Common rules include: no docstrings, no comments, specific formatting, test requirements.
+
+**Step 2: Confirm constraints before proceeding.**
+
+Output this block exactly:
+
+```
+## Constraints active for this session
+- [list each rule from CLAUDE.md, one per line]
+```
+
+Do not skip this. Do not proceed to Phase 0 until this block is printed.
+
+---
 
 ## Usage
 
@@ -11,183 +36,254 @@ This command implements a **comparative borrowing** strategy: understand your ow
 ```
 
 - `<github-repo>`: GitHub URL or `user/repo` shorthand
-- `[focus]`: Optional — specific aspect to focus on (e.g., "hook system", "agent memory")
+- `[focus]`: Optional — specific aspect to focus on
 
-## Storage convention
+## Storage
 
-Xỉa state is **project-local**, stored in the repository itself:
+Xỉa state is **project-local**, stored inside the repo and committed to git:
 
 ```
 <project-root>/
 └── .claude/
     └── xia/
-        ├── XIALOGUE.md        ← evolution log (committed to git)
+        ├── XIALOGUE.md
         └── patterns/
-            └── xia-repo-B-pattern.md
+            └── xia-[repo-slug]-[pattern].md
 ```
 
-**Why project-local?** `~/.claude` is machine-local and not in git — it mixes all projects together and disappears when you move to another PC. `.claude/xia/` travels with the repo: clone on any machine and the full Xỉa history is immediately available.
+---
 
-The global `~/.claude/skills/learned/` is optionally used only for patterns generic enough to be useful across ALL projects.
+## Phase 0 — Know A
 
-## Workflow
+**Input:** current working directory
 
-### Phase 0 — Know A (current state of this project)
+**Commands — run in this order:**
 
-Check `.claude/xia/XIALOGUE.md` in the current working directory:
-
-- **File missing** → first Xỉa session on this project. A = raw codebase with no prior borrows.
-- **File exists** → read the "Current evolved state of A" summary at the top. This tells you what A already has from prior sessions without replaying every session.
-
-Then pack the local codebase for gap analysis:
-
-```
-mcporter call repomix.pack_codebase(directory: ".", compress: true)
+```bash
+# 1. Check prior Xỉa state
+cat .claude/xia/XIALOGUE.md 2>/dev/null || echo "XIALOGUE_MISSING"
 ```
 
-Run a brief sequential-thinking analysis:
-```
-npx mcporter call "sequential-thinking.start_session(problem: \"What does A currently do well, and where are its gaps?\", success_criteria: \"Gap list to compare against B\", session_type: \"coding\")"
-```
-
-### Phase 1 — Ingest B
-
-Pack the remote repository:
-
-```
-mcporter call repomix.pack_remote_repository(remote: "$ARGUMENTS", compress: true)
+```bash
+# 2. Pack local codebase
+npx mcporter call "repomix.pack_codebase(directory: \".\", compress: true)"
+# → note the outputFilePath, use Read tool to read it
 ```
 
-If a focus keyword was provided, grep immediately:
+```bash
+# 3. Start sequential-thinking session
+npx mcporter call "sequential-thinking.start_session(problem: \"What does A currently do, and where are its gaps relative to the focus: $ARGUMENTS?\", success_criteria: \"Gap list for comparison against B\", session_type: \"coding\")"
 ```
+
+```bash
+# 4. Add one thought cataloguing A's capabilities and known gaps
+npx mcporter call "sequential-thinking.add_thought(content: \"A CAPABILITIES: [list]. A GAPS: [list based on codebase read].\", confidence: 0.9)"
+```
+
+**Required output — print exactly:**
+
+```
+## Phase 0 — State of A
+**Prior Xỉa sessions:** [none / N sessions, last: YYYY-MM-DD]
+**Evolved state:** [one sentence from XIALOGUE.md summary, or "fresh codebase"]
+**Identified gaps:** [bullet list, 3-5 items]
+```
+
+---
+
+## Phase 1 — Ingest B
+
+**Input:** `$ARGUMENTS` (repo + optional focus)
+
+**Commands:**
+
+```bash
+npx mcporter call "repomix.pack_remote_repository(remote: \"<repo>\", compress: true)"
+# → note the outputFilePath
+Read(file_path: "<outputFilePath>")
+```
+
+If focus keyword given, also grep:
+```bash
 Grep(pattern: "<focus>", path: "<outputFilePath>")
 ```
 
-### Phase 2 — Compare A vs B
-
-Create a **gap-analysis branch** in the active session:
+**Required output:**
 
 ```
-npx mcporter call "sequential-thinking.create_branch(name: \"gap-analysis\", from_thought: \"<last-thought-id>\", purpose: \"Compare A vs B to find what is worth borrowing\")"
+## Phase 1 — B Ingested
+**Repo:** [repo URL]
+**Size:** [token count from repomix header]
+**Focus grep hits:** [N matches / not applicable]
 ```
 
-For each analysis dimension, add a thought:
+---
 
-1. **What does B solve that A doesn't?** — B's unique capabilities relative to A's gaps
-2. **What does A do better than B?** — don't borrow what A already handles well
-3. **Integration friction** — what from B can merge cleanly vs. what conflicts with A's patterns?
+## Phase 2 — Gap Analysis
 
-Score each candidate by: **value** (how much does A improve?) × **friction** (how hard to integrate?).
+**Commands:**
 
-### Phase 3 — Targeted Dialogue
+```bash
+npx mcporter call "sequential-thinking.create_branch(name: \"gap-analysis\", from_thought: \"<last-thought-id>\", purpose: \"Compare A vs B capabilities\")"
 
-Present the comparative findings:
-
-> "A currently lacks: [X, Y, Z].
-> B addresses: X well (low friction), Y partially (medium friction), Z (high friction — conflicts with A's [pattern]).
->
-> Recommended Xỉa targets: X first, then Y.
-> Skip Z for now — here's why: [reason].
->
-> Confirm, or tell me which to focus on."
-
-Wait for user confirmation before proceeding.
-
-### Phase 4 — Adapt
-
-Transform the chosen insight into A's context:
-- Rename to match A's conventions
-- Strip what doesn't apply
-- Identify where in A this plugs in (seam detection)
-
-**If GitNexus is indexed** (`.gitnexus/` exists), use it for seam detection:
+npx mcporter call "sequential-thinking.add_thought(content: \"B SOLVES BUT A LACKS: [list]. A ALREADY HANDLES: [list]. INTEGRATION FRICTION: [per candidate: low/medium/high + reason].\", confidence: 0.9)"
 ```
+
+**Required output — this exact table, no substitutions:**
+
+```
+## Phase 2 — Gap Analysis
+
+| Gap in A | B's solution | Friction | Verdict |
+|----------|-------------|----------|---------|
+| [gap]    | [how B solves it] | Low/Med/High | Borrow / Skip |
+| ...      | ...         | ...      | ...     |
+```
+
+Score friction as: **Low** = drops in cleanly, **Med** = needs adaptation, **High** = conflicts with A's existing patterns.
+
+---
+
+## Phase 3 — Dialogue
+
+Print this block, then **wait for user response before continuing**:
+
+```
+## Phase 3 — Xỉa Targets
+
+**A lacks (vs B):**
+- [gap 1] — B solves this with [approach] — friction: [Low/Med/High]
+- [gap 2] — ...
+
+**Recommended first borrow:** [gap with best value/friction ratio]
+**Skip for now:** [gaps with High friction + reason]
+
+Confirm? Or specify which gap to focus on.
+```
+
+Do not proceed to Phase 4 until user confirms.
+
+---
+
+## Phase 4 — Adapt
+
+**Constraints check:** Re-read the constraints listed at the top of this session. Every line of adapted code must comply.
+
+If GitNexus is indexed (`.gitnexus/` exists):
+
+```bash
 gitnexus_query --symbol "<relevant-local-symbol>"
 gitnexus_impact --symbol "<symbol-to-be-changed>" --depth 2
 ```
 
-Skip if GitNexus is not set up — describe integration points manually using the Phase 0 packed output.
+Adapt the chosen pattern:
+- Apply constraints from CLAUDE.md (no comments, no docstrings, etc.)
+- Rename to match A's naming conventions
+- Strip what doesn't apply to A's context
 
-### Phase 5 — Save (project-local)
+**Required output:**
 
-Write the extracted pattern to `.claude/xia/patterns/xia-[repo-slug]-[pattern].md`:
+```
+## Phase 4 — Adaptation Plan
+
+**Seam:** [where in A this attaches — file:line or module]
+**Changes to A:** [what files change and how]
+**Constraints applied:** [list each CLAUDE.md rule and how it was applied]
+```
+
+---
+
+## Phase 5 — Save
+
+Write to `.claude/xia/patterns/xia-[repo-slug]-[pattern].md`.
+
+**The file must use this exact template:**
 
 ```markdown
 ---
-name: xia-[repo-slug]-[pattern]
 source: https://github.com/[repo]
-extracted: [date]
+extracted: [YYYY-MM-DD]
 ---
 
-# [Pattern Name] — Xỉa from [repo]
+# [Pattern Name] from [repo]
 
-**Source**: [repo URL]
-**Extracted**: [date]
-**Gap filled**: [what A was missing that this addresses]
+**Gap filled:** [what A was missing]
+**Constraints applied:** [list from CLAUDE.md]
 
-## What this is
+## Pattern
 
-[2-3 sentence description]
+[code only — no comments, no docstrings, per CLAUDE.md rules]
 
-## Why it fills A's gap
+## Seam
 
-[Why this addresses the specific gap identified in Phase 2]
+[where in A this attaches]
 
-## The pattern
+## Delta from original
 
-[Core code or pseudocode — no comments, no docstrings]
-
-## How to apply here
-
-[Concrete application in this project, referencing A's specific files/symbols]
-
-## Original context
-
-[How source repo B used it]
+[what was changed and why]
 ```
 
-Optionally also save to `~/.claude/skills/learned/` if the pattern is generic enough to apply to other projects.
+---
 
-### Phase 6 — Log (update XIALOGUE.md)
+## Phase 6 — Log
 
-Update `.claude/xia/XIALOGUE.md` with two things:
-
-**1. Update the "Current evolved state of A" summary at the top** — revise the prose to reflect what A can now do after this borrow. This is what Phase 0 reads on the next session (possibly from a different PC).
-
-**2. Append a row to the borrow table:**
-
-```
-| [date] | [repo] | [pattern] | [gap filled] | .claude/xia/patterns/[file] |
-```
-
-If `.claude/xia/XIALOGUE.md` does not exist, create it using this template:
+**If `.claude/xia/XIALOGUE.md` does not exist**, create it with this exact structure:
 
 ```markdown
-# XIALOGUE — [Project Name]
+# XIALOGUE — [project name from package.json or directory name]
 
 ## Current evolved state of A
 
-[One paragraph describing what this project currently does, what patterns it uses,
-and what has been borrowed so far. Written as present-tense capability description.
-Update this summary after every Xỉa session.]
-
-*First Xỉa session — no prior borrows.*
+[One paragraph — present tense — what A can do now including this borrow.]
 
 ---
 
 ## Borrow history
 
-| Date | Source | Pattern | Gap filled | Saved to |
-|------|--------|---------|------------|----------|
+| Date | Source | Pattern | Gap filled | File |
+|------|--------|---------|------------|------|
 ```
 
-## Commit after each session
+**If it exists**, do two things:
 
-After Phase 6, the `.claude/xia/` directory should be committed:
+1. Rewrite the "Current evolved state of A" paragraph to include this borrow
+2. Append one row to the table:
+
+```
+| [YYYY-MM-DD] | [repo] | [pattern name] | [gap filled] | .claude/xia/patterns/[filename] |
+```
+
+**Then commit:**
 
 ```bash
 git add .claude/xia/
 git commit -m "xia: borrow [pattern] from [repo]"
 ```
 
-This makes the Xỉa state available on every machine that pulls the repo.
+**Required output:**
+
+```
+## Phase 6 — Complete
+
+**XIALOGUE.md:** [created / updated]
+**Pattern saved:** .claude/xia/patterns/[filename]
+**Committed:** [yes / pending — run: git add .claude/xia/ && git commit -m "xia: borrow [pattern] from [repo]"]
+```
+
+---
+
+## Session summary format
+
+After Phase 6, always print:
+
+```
+## Xỉa Session Complete
+
+**Repo:** [B]
+**Borrowed:** [pattern name]
+**Gap filled:** [one line]
+**Files changed:** [list]
+**Next target:** [next gap from Phase 2 table, if any]
+```
+
+This summary format is fixed. Do not add or remove sections.
