@@ -51,6 +51,19 @@ Xỉa state is **project-local**, stored inside the repo and committed to git:
             └── xia-[repo-slug]-[pattern].md
 ```
 
+## Install Targets
+
+**Default: always project-local first.**
+
+| What is borrowed | Install to | Promote to `~/.claude/` when |
+|-----------------|-----------|-------------------------------|
+| Pattern / workflow | `.claude/xia/patterns/` | Never — stays project-local |
+| Skill | `.claude/skills/` | After 5+ sessions of proven value, on explicit user request |
+| Agent | `.claude/agents/` | After 5+ sessions of proven value, on explicit user request |
+| Command | `.claude/commands/` | After 5+ sessions of proven value, on explicit user request |
+
+**Never install directly to `~/.claude/`** unless the user explicitly says "install globally" or "add to global config".
+
 ---
 
 ## Phase 0 — Know A
