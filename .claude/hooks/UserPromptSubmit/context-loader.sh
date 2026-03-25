@@ -5,11 +5,12 @@ SESSION_ID=$(python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('s
 MARKER="/tmp/claude-kg-$SESSION_ID"
 [ -f "$MARKER" ] && exit 0
 
+AIM_FILES=(.aim/memory*.jsonl)
+[ ! -e "${AIM_FILES[0]}" ] && exit 0
+
 touch "$MARKER"
 
-AIM_FILES=(.aim/memory*.jsonl)
-if [ -e "${AIM_FILES[0]}" ]; then
-  python3 -c "
+python3 -c "
 import json, sys, glob
 entities, relations = [], []
 for path in sorted(glob.glob('.aim/memory*.jsonl')):
@@ -35,11 +36,6 @@ if len(entities) > 15:
     print(f'  ... {len(entities)-15} more entities')
 print(f'  {len(relations)} relations indexed')
 " 2>/dev/null
-fi
-
-if [ -f .aim/roles.json ]; then
-  echo "[roles] $(python3 -c "import json; r=json.load(open('.aim/roles.json')); print(f\"{r['project_type']}: {', '.join(x['id'] for x in r['roles'])}\")" 2>/dev/null)"
-fi
 
 if [ -f ".claude/handoff.md" ]; then
   echo ""
