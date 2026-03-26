@@ -29,5 +29,8 @@
   "model": "claude-sonnet-4-6",
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "low"
+  "effortLevel": "low",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
 }
