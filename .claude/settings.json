@@ -9,16 +9,6 @@
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.claude/hooks/sync-skills-to-codex.py --hook"
-          }
-        ]
-      }
     ]
   },
   "enabledPlugins": {
@@ -36,6 +26,7 @@
     "superpowers-lab@superpowers-marketplace": true,
     "episodic-memory@superpowers-marketplace": true
   },
+  "model": "claude-sonnet-4-6",
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,
   "effortLevel": "low"
