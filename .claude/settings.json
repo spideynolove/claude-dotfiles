@@ -29,7 +29,7 @@
     "typescript-lsp@claude-plugins-official": true,
     "superpowers-developing-for-claude-code@superpowers-marketplace": true,
     "superpowers-lab@superpowers-marketplace": true,
-    "episodic-memory@superpowers-marketplace": true,
+    "episodic-memory@superpowers-marketplace": false,
     "claude-hud@claude-hud": true
   },
   "extraKnownMarketplaces": {
