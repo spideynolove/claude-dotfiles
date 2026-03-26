@@ -19,6 +19,7 @@ copy_if_missing() {
 echo "=== Claude Code (~/.claude/) ==="
 lns "$DOTFILES/.claude/CLAUDE.md"            "$HOME/.claude/CLAUDE.md"
 lns "$DOTFILES/.claude/hooks/context-loader.sh" "$HOME/.claude/hooks/context-loader.sh"
+lns "$DOTFILES/.claude/hooks/sync-skills-to-codex.py" "$HOME/.claude/hooks/sync-skills-to-codex.py"
 lns "$DOTFILES/.claude/agents/codebase-analyst.md" "$HOME/.claude/agents/codebase-analyst.md"
 lns "$DOTFILES/.claude/agents/mcp-manager.md"      "$HOME/.claude/agents/mcp-manager.md"
 lns "$DOTFILES/.claude/agents/orchestrator.md"     "$HOME/.claude/agents/orchestrator.md"
@@ -28,6 +29,7 @@ lns "$DOTFILES/.claude/commands/init-project.md"   "$HOME/.claude/commands/init-
 lns "$DOTFILES/.claude/commands/onboard.md"        "$HOME/.claude/commands/onboard.md"
 lns "$DOTFILES/.claude/commands/setup-github-actions.md" "$HOME/.claude/commands/setup-github-actions.md"
 lns "$DOTFILES/.claude/commands/startup.md"        "$HOME/.claude/commands/startup.md"
+lns "$DOTFILES/.claude/skills/sync-to-codex" "$HOME/.claude/skills/sync-to-codex"
 echo "  done"
 
 echo "=== Gemini CLI (~/.gemini/) ==="
