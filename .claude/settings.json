@@ -28,5 +28,8 @@
   },
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true,
-  "effortLevel": "low"
+  "effortLevel": "low",
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
 }
