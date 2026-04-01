@@ -18,6 +18,7 @@
   "enabledPlugins": {
     "superpowers@claude-plugins-official": false,
     "ui-ux-pro-max@ui-ux-pro-max-skill": false,
+    "context7@claude-plugins-official": true,
     "ralph-loop@claude-plugins-official": true,
     "superpowers@superpowers-marketplace": true,
     "code-simplifier@claude-plugins-official": true,
