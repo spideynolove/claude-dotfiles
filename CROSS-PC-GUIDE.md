@@ -17,6 +17,20 @@ unique content was cherry-picked into `main`.
 - `i5-gen12`: real-browser-mcp guide, browser-mcp CLAUDE.md, agents-setup.md
 - `home-refresh`: dotfiles subagents, orchestrator/mcp-manager docs
 
+## What was done (hung-h81, 2026-04-02)
+
+Remaining machine branches (`hung-h81`, `home-pc`, `i5-gen12`) merged into
+`main` and deleted from remote. All branches are now gone — `main` is the only
+branch.
+
+### claude-code-in-action — what was merged into main
+- `hung-h81` (21 commits): modules 20-35, skill libraries, xia pattern set,
+  reviewer agents, codegraphcontext/repomix skills, 20-skill-sync hook
+- `home-pc` (1 commit): token-efficiency skill, role system agents/commands,
+  05-subagents restructure (agents-setup.md → SYSTEM.md)
+- `i5-gen12` (1 commit): browser MCP migration to dev-browser, real-browser-mcp
+  guide
+
 ---
 
 ## Setting up on another PC
@@ -55,19 +69,30 @@ git pull origin main
 git branch -a   # same
 ```
 
-### Step 3 — Backup config essentials (optional)
+### Step 3 — Backup config essentials (optional but recommended)
 
 ```bash
-mkdir -p ~/.claude-backup-$(date +%Y%m%d)
+BACKUP=~/.claude-backup-$(date +%Y%m%d)
+mkdir -p "$BACKUP"
 for d in agents hooks skills commands memory; do
-  [ -d ~/.claude/$d ] && cp -r ~/.claude/$d ~/.claude-backup-$(date +%Y%m%d)/$d
+  [ -d ~/.claude/$d ] && cp -r ~/.claude/$d "$BACKUP/$d"
 done
 for f in CLAUDE.md settings.json; do
-  [ -f ~/.claude/$f ] && cp ~/.claude/$f ~/.claude-backup-$(date +%Y%m%d)/$f
+  [ -f ~/.claude/$f ] && cp ~/.claude/$f "$BACKUP/$f"
 done
+echo "Backup saved to $BACKUP (~400KB)"
 ```
 
-Do NOT `cp -r ~/.claude` — `plugins/` is 500MB+ and `projects/` is conversation history.
+**Do NOT** `cp -r ~/.claude` — breakdown of why:
+
+| Dir | Size | Keep? |
+|-----|------|-------|
+| `plugins/` | ~550MB | No — Claude Code manages this like node_modules |
+| `projects/` | ~200MB | No — conversation history, machine-local |
+| `telemetry/`, `debug/` | ~50MB | No — runtime logs |
+| `agents/`, `hooks/`, `skills/`, `commands/`, `settings.json` | ~400KB | **Yes** |
+
+If `~/.claude` is fresh (never drifted), skip this step entirely and go straight to Step 4.
 
 ### Step 4 — Symlink skills into ~/.claude/skills/
 
@@ -146,38 +171,52 @@ git push origin main
 
 ### Pulling updates from main on another PC
 
-```bash
-cd <claude-dotfiles-path>
-git pull origin main
-bash install.sh          # re-run to pick up any new symlinks
+All machine branches have been deleted from remote. `main` is the only branch.
+Run this on each remaining PC:
 
-cd <claude-code-in-action-path>
+```bash
+# claude-dotfiles
+cd <claude-dotfiles-path>
+git fetch --prune
+git checkout main
 git pull origin main
+bash install.sh          # re-link any new files added to main
+
+# claude-code-in-action
+cd <claude-code-in-action-path>
+git fetch --prune
+git checkout main
+git pull origin main
+
+# Delete stale local branches (safe — -d warns if unmerged)
+git branch | grep -v '^\* main' | xargs git branch -d
 ```
+
+`--prune` cleans up dead remote-tracking refs for branches deleted on the
+remote. `-d` is safe — it refuses to delete branches with unmerged work and
+warns you instead of silently losing commits.
 
 ---
 
 ## If another PC has leftover machine branches
 
+Since all remote branches are deleted, only local stragglers remain.
+
 ```bash
 cd <repo-path>
 git fetch --prune          # remove stale remote-tracking refs
-git branch -a              # list what still exists locally
 
-# For each leftover branch — first check unique content:
-git diff main..<branch> --name-only --diff-filter=A
+# Check if a leftover branch has anything not in main:
+git log main..<branch> --oneline
 
-# If nothing unique → delete immediately:
+# Nothing unique → delete:
 git branch -d <branch>
 
-# If unique files → cherry-pick into main first:
+# Has unique commits → cherry-pick first, then delete:
 git checkout main
-git checkout <branch> -- <path/to/file>
-git add <path/to/file>
-git commit -m "feat: cherry-pick <file> from <branch>"
+git cherry-pick <commit-hash>
 git push origin main
 git branch -d <branch>
-git push origin --delete <branch>   # if remote branch still exists
 ```
 
 ---
