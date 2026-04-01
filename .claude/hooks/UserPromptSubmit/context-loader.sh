@@ -37,6 +37,7 @@ if len(entities) > 15:
 print(f'  {len(relations)} relations indexed')
 " 2>/dev/null
 
+# Inject handoff context if present
 if [ -f ".claude/handoff.md" ]; then
   echo ""
   echo "[handoff] Resuming from previous session:"

@@ -17,34 +17,28 @@ def main():
     session_id = re.sub(r"[^a-zA-Z0-9_-]", "_", session_id) or "unknown"
     prompt = data.get("prompt", "").strip()
     count_file = Path(f"/tmp/cc-edits-{session_id}")
+    done_file = Path(f"/tmp/cc-simplified-{session_id}")
 
     if prompt.lower() == "/simplify":
         try:
+            done_file.touch()
             count_file.write_text("0")
         except OSError:
             pass
         sys.exit(0)
 
     try:
-        count = int(count_file.read_text())
+        count = int(count_file.read_text()) if count_file.exists() else 0
     except (ValueError, OSError):
         count = 0
 
-    if count >= THRESHOLD:
-        try:
-            count_file.write_text("0")
-        except OSError:
-            pass
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "hookEventName": "UserPromptSubmit",
-                "additionalContext": (
-                    f"BEFORE responding to the user's message: you have {count} recent file edits "
-                    "that need simplification. Invoke the `simplify` skill now, complete it fully, "
-                    "then proceed with the user's request."
-                )
-            }
-        }))
+    if count >= THRESHOLD and not done_file.exists():
+        print(
+            f"[AUTO-SIMPLIFY] {count} edits pending simplification. "
+            "Type /simplify before continuing.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
 
 if __name__ == "__main__":
