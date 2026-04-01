@@ -55,7 +55,21 @@ git pull origin main
 git branch -a   # same
 ```
 
-### Step 3 — Symlink skills into ~/.claude/skills/
+### Step 3 — Backup config essentials (optional)
+
+```bash
+mkdir -p ~/.claude-backup-$(date +%Y%m%d)
+for d in agents hooks skills commands memory; do
+  [ -d ~/.claude/$d ] && cp -r ~/.claude/$d ~/.claude-backup-$(date +%Y%m%d)/$d
+done
+for f in CLAUDE.md settings.json; do
+  [ -f ~/.claude/$f ] && cp ~/.claude/$f ~/.claude-backup-$(date +%Y%m%d)/$f
+done
+```
+
+Do NOT `cp -r ~/.claude` — `plugins/` is 500MB+ and `projects/` is conversation history.
+
+### Step 4 — Symlink skills into ~/.claude/skills/
 
 `install.sh` does NOT manage `~/.claude/skills/` — do this manually first:
 
@@ -68,7 +82,7 @@ for skill_dir in "$DOTFILES/.claude/skills"/*/; do
 done
 ```
 
-### Step 4 — Run the dotfiles installer
+### Step 5 — Run the dotfiles installer
 
 ```bash
 cd <claude-dotfiles-path>
@@ -77,7 +91,7 @@ bash install.sh
 
 This symlinks agents, commands, hooks, and CLAUDE.md into `~/.claude/`.
 
-### Step 5 — Copy and edit settings.json for this machine
+### Step 6 — Copy and edit settings.json for this machine
 
 ```bash
 cp <claude-dotfiles-path>/.claude/settings.json ~/.claude/settings.json
@@ -90,7 +104,7 @@ Then edit `~/.claude/settings.json` for this machine:
 
 Do NOT commit machine-specific settings to main.
 
-### Step 6 — Verify ~/.claude is wired correctly
+### Step 7 — Verify ~/.claude is wired correctly
 
 ```bash
 ls -la ~/.claude/agents/       # should show symlinks
