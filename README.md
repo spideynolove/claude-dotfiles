@@ -1,81 +1,149 @@
 # claude-dotfiles
 
-Portable `~/.claude/` configuration — agents, skills, hooks, and global instructions for Claude Code.
+Personal Claude Code configuration — agents, slash commands, hooks, and skills that run on every project.
 
-## Structure
+## What's in here
 
 ```
 .claude/
-├── CLAUDE.md                          ← global instructions applied to all projects
-├── settings.json                      ← base settings (copy and edit paths per machine)
+├── agents/               # Subagents Claude can spawn
+│   ├── codebase-analyst  # Builds knowledge graph from any repo
+│   ├── mcp-manager       # Runs MCP tools via CLI or mcporter
+│   ├── orchestrator      # Full coding pipeline: clarify → analyze → plan → implement → review → test
+│   └── task-runner       # Delegates tasks to external AI CLIs by role
+│
+├── commands/             # Slash commands (/startup, /onboard, etc.)
+│   ├── startup           # Single entry point: onboard → init-project → detect-roles
+│   ├── onboard           # Builds .aim/memory.jsonl knowledge graph for a project
+│   ├── init-project      # Generates CLAUDE.md via external CLI
+│   └── detect-roles      # Detects project type, writes .aim/roles.json
+│
 ├── hooks/
-│   └── context-loader.sh              ← auto-injects .aim/ knowledge graph on session start
-├── agents/
-│   ├── orchestrator.md                ← full coding pipeline: clarify→analyze→plan→implement→review→test
-│   ├── codebase-analyst.md            ← repomix + sequential-thinking + knowledge-graph
-│   └── mcp-manager.md                 ← MCP executor with CLI fallback chain
-└── skills/
-    ├── repomix/SKILL.md               ← broad codebase context via repomix
-    ├── mcp-knowledge-graph/SKILL.md   ← persistent entity/relation graph
-    ├── sequential-thinking/SKILL.md   ← structured cognitive analysis
-    └── nuxt/SKILL.md                  ← Nuxt full-stack Vue framework
+│   └── context-loader.sh # Injects knowledge graph, roles, and handoff context at session start
+│
+├── skills/               # Reusable prompt libraries (invoked via Skill tool)
+│   ├── handoff           # Capture work state before switching machines
+│   ├── mcp-knowledge-graph
+│   ├── repomix
+│   ├── nuxt
+│   └── sequential-thinking
+│
+├── settings.json         # Base settings (plugins, hooks, effort level)
+└── settings.home-pc.json # Machine-specific overrides (example)
 ```
 
-## Install
+## How it works
+
+### Session start
+
+`context-loader.sh` fires on every `UserPromptSubmit` hook and injects up to three context blocks into the session (each only once per session ID):
+
+1. **Knowledge graph** — top 15 entities from `.aim/memory.jsonl` if the project has been onboarded
+2. **Roles** — project type and assigned roles from `.aim/roles.json` if role detection has run
+3. **Handoff** — contents of `.claude/handoff.md` if a cross-machine handoff file is present
+
+### Project onboarding (`/startup`)
+
+Run once per project (or after major architectural changes):
+
+```
+/startup
+```
+
+This chains three phases automatically:
+1. **Onboard** — spawns `codebase-analyst` to pack the repo with repomix, analyze it with sequential-thinking, and persist entities/relations to `.aim/memory.jsonl`
+2. **Init project** — uses an external AI CLI to generate `CLAUDE.md` with build commands, architecture overview, and code conventions
+3. **Detect roles** — runs file-presence checks to identify the project type and proposes developer roles; writes `.aim/roles.json` on confirmation
+
+### Orchestrated coding
+
+```
+Use the orchestrator agent for any feature request or bug fix
+```
+
+The orchestrator runs six phases:
+1. **Clarify** — resolves ambiguity before touching code
+2. **Analyze** — spawns `codebase-analyst` for fresh context
+3. **Plan** — writes a role-annotated task list (e.g. `[backend-dev/qwen] Implement user model`) and waits for user approval
+4. **Implement** — spawns `task-runner` per task, which delegates to the right CLI
+5. **Review** — diffs the full changeset and fixes issues
+6. **Test** — runs the existing test suite
+
+### Multi-tool task routing
+
+`task-runner` executes each task using the tool assigned in the plan. Fallback chain per task:
+
+```
+preferred tool → qwen → kimi → codex → claude (inline)
+```
+
+Results are written to `.aim/results/tN.json` so each task can read the previous task's output as context.
+
+### Cross-machine handoffs (`/handoff` skill)
+
+Before leaving a machine mid-task:
+
+```
+Use the handoff skill
+```
+
+This writes `.claude/handoff.md` with current task, next steps, open questions, and files in flight, then commits and pushes. On the next machine, `context-loader.sh` picks it up automatically at session start.
+
+## Installation
 
 ```bash
-git clone <this-repo> ~/dotfiles/claude-dotfiles
-cd ~/dotfiles/claude-dotfiles
+git clone git@github.com:spideynolove/claude-dotfiles.git ~/Documents/dotfiles/claude-dotfiles
+cd ~/Documents/dotfiles/claude-dotfiles
 bash install.sh
 ```
 
-`install.sh` symlinks agents, skills, hooks, and `CLAUDE.md` into `~/.claude/`.
+`install.sh` symlinks each file in `.claude/` to `~/.claude/`, preserving any existing files.
 
-Then copy and edit `settings.json` manually — it contains fields that differ per machine:
+For machine-specific settings, copy and rename `settings.home-pc.json`:
 
 ```bash
-cp .claude/settings.json ~/.claude/settings.json
+cp .claude/settings.home-pc.json .claude/settings.<hostname>.json
 ```
 
-## What is NOT synced
+## Branch layout
 
-| Path | Reason |
-|------|--------|
-| `.claude/plugins/` | Managed by Claude Code installer — like `node_modules` |
-| `.claude/projects/` | Conversation history JSONL — large and personal |
-| `.claude/backups/`, `cache/`, `debug/` | Transient, machine-generated |
-| `.claude/.credentials.json` | Auth tokens |
-| `.mcporter/mcporter.json` | Contains absolute node/python paths per machine |
+| Branch | Machine | Notes |
+|--------|---------|-------|
+| `main` | — | Merged baseline, no machine-specific config |
+| `home-pc` | AMD home desktop | qwen + kimi + codex installed; full multi-agent stack |
+| `i5-gen12` | Intel i5 laptop | gemini-cli + kimi; handoff skill for cross-machine work |
 
-## Multi-machine strategy
+Machine branches diverge only in `settings.<machine>.json` and any CLI-specific tool order. Core agents, commands, and skills stay in sync with `main`.
 
-```
-main       ← shared: skills, agents, hooks, CLAUDE.md
-i5-gen12   ← this machine (Intel i5 Gen12)
-pc-work    ← example: work machine with different paths
-```
+## Key files explained
 
-Improve skills/agents/hooks on any machine → merge to `main` → pull on others.
-Keep `settings.json` local — never merge it to `main`.
+### `.aim/` (per-project, gitignored)
 
-## mcp-manager fallback chain
+Generated at runtime, not stored in this repo:
 
-The `mcp-manager` agent tries AI CLIs in priority order before falling back to direct mcporter calls:
+| File | Contents |
+|------|----------|
+| `memory.jsonl` | Knowledge graph — entities and relations from codebase analysis |
+| `roles.json` | Detected project type and role→tool assignments |
+| `plan.json` | Current task dependency graph (written by orchestrator) |
+| `results/tN.json` | Per-task output from task-runner |
 
-1. `gemini-cli` — `gemini -y -m gemini-2.5-flash -p "<task>"`
-2. `kimi` — `kimi -p "<task>"`
-3. `qwen-code` — `qwen -p "<task>"`
-4. `codex` — `codex "<task>"`
-5. `mcporter` — always available
+### `settings.json`
 
-## Context stack
+Shared base config: hook wiring, enabled plugins, effort level. Safe to commit.
 
-These dotfiles implement a three-layer context strategy:
+### `settings.<machine>.json`
 
-| Layer | Tool | Purpose |
-|-------|------|---------|
-| Tool access | mcporter | On-demand MCP invocation, keeps context lean |
-| Content | repomix | Packs codebase to compressed XML (~70% token reduction) |
-| Structure | mcp-knowledge-graph | Persistent entity/relation graph across sessions |
+Machine-specific overrides. Commit to the machine branch, not main.
 
-The `context-loader.sh` hook fires once per session and injects the project's `.aim/` knowledge graph summary automatically.
+## External CLIs
+
+The agents expect these tools on `$PATH` — install whichever are available on each machine:
+
+| CLI | Install |
+|-----|---------|
+| `qwen` | [qwen-code](https://github.com/QwenLM/qwen-code) |
+| `kimi` | [kimi-cli](https://github.com/moonshot-ai/kimi-cli) |
+| `codex` | [openai/codex](https://github.com/openai/codex) |
+| `gemini` | [gemini-cli](https://github.com/google-gemini/gemini-cli) |
+| `npx mcporter` | bundled via npm — no install needed |
