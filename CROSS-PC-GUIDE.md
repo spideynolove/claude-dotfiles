@@ -55,16 +55,29 @@ git pull origin main
 git branch -a   # same
 ```
 
-### Step 3 — Run the dotfiles installer
+### Step 3 — Symlink skills into ~/.claude/skills/
+
+`install.sh` does NOT manage `~/.claude/skills/` — do this manually first:
+
+```bash
+DOTFILES=<claude-dotfiles-path>
+for skill_dir in "$DOTFILES/.claude/skills"/*/; do
+  skill=$(basename "$skill_dir")
+  mkdir -p ~/.claude/skills/"$skill"
+  ln -sf "$skill_dir/SKILL.md" ~/.claude/skills/"$skill"/SKILL.md
+done
+```
+
+### Step 4 — Run the dotfiles installer
 
 ```bash
 cd <claude-dotfiles-path>
 bash install.sh
 ```
 
-This symlinks agents, commands, hooks, skills, and CLAUDE.md into `~/.claude/`.
+This symlinks agents, commands, hooks, and CLAUDE.md into `~/.claude/`.
 
-### Step 4 — Copy and edit settings.json for this machine
+### Step 5 — Copy and edit settings.json for this machine
 
 ```bash
 cp <claude-dotfiles-path>/.claude/settings.json ~/.claude/settings.json
@@ -77,7 +90,7 @@ Then edit `~/.claude/settings.json` for this machine:
 
 Do NOT commit machine-specific settings to main.
 
-### Step 5 — Verify ~/.claude is wired correctly
+### Step 6 — Verify ~/.claude is wired correctly
 
 ```bash
 ls -la ~/.claude/agents/       # should show symlinks
