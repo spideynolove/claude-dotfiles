@@ -1,3 +1,7 @@
+---
+description: Detect the project type from file-presence signals and generate developer roles. No LLM inference — deterministic file checks only.
+---
+
 Detect the project type from file-presence signals and generate developer roles. No LLM inference needed for detection — use deterministic file checks.
 
 ## Detection Logic

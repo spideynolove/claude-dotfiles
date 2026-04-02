@@ -1,3 +1,8 @@
+---
+name: mcp-knowledge-graph
+description: Persistent codebase knowledge graph via MCP. Store and query architectural facts (components, dependencies, decisions) across sessions. Use when onboarding to a codebase or resuming work after a gap.
+---
+
 # mcp-knowledge-graph — Persistent Codebase Knowledge
 
 ## When to invoke

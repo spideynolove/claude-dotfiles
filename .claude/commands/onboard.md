@@ -1,3 +1,7 @@
+---
+description: Spawn the codebase-analyst agent to build a persistent knowledge graph for the current project into .aim/memory.jsonl.
+---
+
 Spawn the codebase-analyst agent to build a persistent knowledge graph for the current project.
 
 The agent will:

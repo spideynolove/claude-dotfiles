@@ -1,3 +1,8 @@
+---
+name: repomix
+description: Pack local or remote repos into a single context blob for whole-repository understanding. Use before tasks spanning multiple directories, architecture reviews, or onboarding to an unfamiliar codebase.
+---
+
 # Repomix — Broad Codebase Context
 
 ## When to invoke this skill

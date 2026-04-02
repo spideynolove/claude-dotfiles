@@ -1,3 +1,7 @@
+---
+description: Single entry point for project onboarding. Chains onboard → init-project → detect-roles, skipping completed phases.
+---
+
 Single entry point for project onboarding. Chains three phases in sequence, skipping any that are already complete.
 
 ## Phase A — Codebase Analysis

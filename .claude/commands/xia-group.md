@@ -1,3 +1,8 @@
+---
+description: Run sequential /xia rounds against a ranked list of repos, distilling patterns into the current codebase one at a time.
+argument-hint: "<group-name> <repo1> <repo2> ... [--focus <topic>]"
+---
+
 # /xia-group — Sequential Group Distillation
 
 **Purpose:** Run `/xia` rounds against a ranked list of repos, using the codebase itself as the running distillation. Each round absorbs only what the previous rounds haven't already covered.
