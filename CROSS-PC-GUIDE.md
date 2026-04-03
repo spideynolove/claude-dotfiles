@@ -33,73 +33,114 @@ branch.
 
 ---
 
-## Setting up on another PC
+## Fresh setup / refresh on any PC
+
+Use this when setting up for the first time **or** when your `~/.claude` has
+drifted from the canonical dotfiles (experimental hooks, stale agents, etc.).
 
 ### Prerequisites
+
 - git, bash
-- Claude Code CLI installed
-- Optional: qwen, kimi, codex, gemini-cli on $PATH (for multi-tool routing)
+- Claude Code CLI installed (`claude --version` should work)
+- SSH key added to GitHub (for `git@github.com:` clones)
+- Optional: qwen, codex, gemini-cli on `$PATH` (for multi-tool routing)
 
-### Step 1 — Clone both repos (adjust paths as needed)
+---
 
+### Step 1 — Get the latest dotfiles
+
+**First time on this machine:**
 ```bash
 mkdir -p ~/Documents/spideynolove
 git clone git@github.com:spideynolove/claude-dotfiles.git \
     ~/Documents/spideynolove/claude-dotfiles
+```
 
+**Already cloned — just pull:**
+```bash
+cd ~/Documents/spideynolove/claude-dotfiles
+git checkout main && git pull origin main
+```
+
+Also pull `claude-code-in-action` if you use it for learning:
+```bash
 mkdir -p ~/Public/gits
 git clone git@github.com:spideynolove/claude-code-in-action.git \
     ~/Public/gits/claude-code-in-action
+# or: cd ~/Public/gits/claude-code-in-action && git pull origin main
 ```
 
-If the repos already exist at a different path, just `cd` into them and use
-those paths everywhere below.
+---
 
-### Step 2 — Verify you are on main and up to date
+### Step 2 — Wipe drifted config from `~/.claude`
+
+This removes everything you manually added or experimented with.
+Claude Code runtime data (history, cache, sessions) is left untouched.
 
 ```bash
-cd <claude-dotfiles-path>
-git checkout main
-git pull origin main
-git branch -a   # should show only main + remotes/origin/main
-
-cd <claude-code-in-action-path>
-git checkout main
-git pull origin main
-git branch -a   # same
+rm -rf ~/.claude/agents
+rm -rf ~/.claude/commands
+rm -rf ~/.claude/hooks
+rm -rf ~/.claude/skills
+rm -rf ~/.claude/plugins
+rm -f  ~/.claude/CLAUDE.md
+rm -f  ~/.claude/settings.json
+rm -f  ~/.claude/settings.json.backup-*
+rm -f  ~/.claude/settings.json.*-backup-*
+rm -f  ~/.claude/hooks.json
+rm -rf ~/.claude/XIALOGUE.md
 ```
 
-### Step 3 — Backup config essentials (optional but recommended)
+What NOT to delete — these are all auto-managed by Claude Code:
+
+| Dir / File | What it is |
+|------------|-----------|
+| `cache/`, `debug/`, `downloads/` | Runtime caches |
+| `file-history/`, `history.jsonl` | Conversation history |
+| `projects/`, `sessions/`, `session-env/` | Per-project state |
+| `todos/`, `shell-snapshots/`, `paste-cache/` | Session data |
+| `statsig/`, `telemetry/`, `stats-cache.json` | Telemetry |
+| `.credentials.json` | Auth — never delete this |
+
+---
+
+### Step 3 — Run the dotfiles installer
 
 ```bash
-BACKUP=~/.claude-backup-$(date +%Y%m%d)
-mkdir -p "$BACKUP"
-for d in agents hooks skills commands memory; do
-  [ -d ~/.claude/$d ] && cp -r ~/.claude/$d "$BACKUP/$d"
+cd ~/Documents/spideynolove/claude-dotfiles
+bash install.sh
+```
+
+This symlinks agents, CLAUDE.md, and `hooks/context-loader.sh` into `~/.claude/`.
+It also wires up Gemini, Qwen, and Codex configs if those tools are installed.
+
+---
+
+### Step 4 — Link remaining hooks and skills (install.sh gap)
+
+`install.sh` does not wire `hooks/UserPromptSubmit/`, `hooks/PostToolUse/`, or
+`skills/`. Do this manually:
+
+```bash
+DOTFILES=~/Documents/spideynolove/claude-dotfiles
+
+# hooks/UserPromptSubmit
+mkdir -p ~/.claude/hooks/UserPromptSubmit
+for f in "$DOTFILES/.claude/hooks/UserPromptSubmit/"*; do
+  ln -sf "$f" ~/.claude/hooks/UserPromptSubmit/$(basename "$f")
 done
-for f in CLAUDE.md settings.json; do
-  [ -f ~/.claude/$f ] && cp ~/.claude/$f "$BACKUP/$f"
+
+# hooks/PostToolUse
+mkdir -p ~/.claude/hooks/PostToolUse
+for f in "$DOTFILES/.claude/hooks/PostToolUse/"*; do
+  ln -sf "$f" ~/.claude/hooks/PostToolUse/$(basename "$f")
 done
-echo "Backup saved to $BACKUP (~400KB)"
-```
 
-**Do NOT** `cp -r ~/.claude` — breakdown of why:
+# hooks/sync-skills-to-codex.py
+ln -sf "$DOTFILES/.claude/hooks/sync-skills-to-codex.py" \
+    ~/.claude/hooks/sync-skills-to-codex.py
 
-| Dir | Size | Keep? |
-|-----|------|-------|
-| `plugins/` | ~550MB | No — Claude Code manages this like node_modules |
-| `projects/` | ~200MB | No — conversation history, machine-local |
-| `telemetry/`, `debug/` | ~50MB | No — runtime logs |
-| `agents/`, `hooks/`, `skills/`, `commands/`, `settings.json` | ~400KB | **Yes** |
-
-If `~/.claude` is fresh (never drifted), skip this step entirely and go straight to Step 4.
-
-### Step 4 — Symlink skills into ~/.claude/skills/
-
-`install.sh` does NOT manage `~/.claude/skills/` — do this manually first:
-
-```bash
-DOTFILES=<claude-dotfiles-path>
+# skills
 for skill_dir in "$DOTFILES/.claude/skills"/*/; do
   skill=$(basename "$skill_dir")
   mkdir -p ~/.claude/skills/"$skill"
@@ -107,44 +148,56 @@ for skill_dir in "$DOTFILES/.claude/skills"/*/; do
 done
 ```
 
-### Step 5 — Run the dotfiles installer
+---
+
+### Step 5 — Link missing commands (install.sh gap)
+
+`install.sh` only links a subset of commands. Link the rest:
 
 ```bash
-cd <claude-dotfiles-path>
-bash install.sh
+DOTFILES=~/Documents/spideynolove/claude-dotfiles
+mkdir -p ~/.claude/commands
+for f in "$DOTFILES/.claude/commands/"*.md; do
+  ln -sf "$f" ~/.claude/commands/$(basename "$f")
+done
 ```
 
-This symlinks agents, commands, hooks, and CLAUDE.md into `~/.claude/`.
+---
 
-### Step 6 — Copy and edit settings.json for this machine
+### Step 6 — Copy settings.json for this machine
 
 ```bash
-cp <claude-dotfiles-path>/.claude/settings.json ~/.claude/settings.json
+cp ~/Documents/spideynolove/claude-dotfiles/.claude/settings.json \
+   ~/.claude/settings.json
 ```
 
-Then edit `~/.claude/settings.json` for this machine:
-- `statusLine.command` — update the bun path if using claude-hud
-- `enabledPlugins` — disable plugins not installed on this machine
-- Keep `"defaultMode": "bypassPermissions"` and `"effortLevel": "low"` as-is
+Edit `~/.claude/settings.json` for this machine if needed:
+- Remove `statusLine` block if you don't have `claude-hud` installed
+- Keep `"defaultMode": "bypassPermissions"` as-is
 
-Do NOT commit machine-specific settings to main.
+Do NOT commit machine-specific edits back to `main`.
 
-### Step 7 — Verify ~/.claude is wired correctly
+---
+
+### Step 7 — Verify
 
 ```bash
-ls -la ~/.claude/agents/       # should show symlinks
-ls -la ~/.claude/hooks/        # context-loader.sh + UserPromptSubmit/
-ls -la ~/.claude/skills/       # skill dirs
-cat ~/.claude/CLAUDE.md        # should show global instructions
+echo "--- agents ---"  && ls -1 ~/.claude/agents/
+echo "--- commands ---" && ls -1 ~/.claude/commands/
+echo "--- hooks ---"   && ls -1 ~/.claude/hooks/
+echo "--- skills ---"  && ls -1 ~/.claude/skills/
+echo "--- CLAUDE.md ---" && head -3 ~/.claude/CLAUDE.md
 ```
+
+Expected output: all files are symlinks pointing into `~/Documents/spideynolove/claude-dotfiles/`.
 
 ---
 
 ## Ongoing workflow — keeping repos in sync
 
-### Rule: never experiment directly in ~/.claude
+### Golden rule: never experiment directly in `~/.claude`
 
-All experimentation goes in a project-local `.claude/` directory:
+All experimentation goes in a **project-local** `.claude/` directory:
 
 ```
 ~/my-experiment/
@@ -155,80 +208,58 @@ All experimentation goes in a project-local `.claude/` directory:
 ```
 
 Claude Code merges project `.claude/` on top of `~/.claude/` automatically.
+Experiment there → validate → then promote to global.
 
-### When an experiment is validated → promote to global
-
-1. Copy the file into `<claude-dotfiles-path>/.claude/<subdir>/`
-2. Re-run `bash install.sh` to symlink it
-3. Commit to `main` and push
+### Promoting a validated experiment to global
 
 ```bash
-cd <claude-dotfiles-path>
-git add .claude/<subdir>/<new-file>
-git commit -m "feat: add <description>"
+DOTFILES=~/Documents/spideynolove/claude-dotfiles
+
+# Copy the file into the dotfiles repo
+cp ~/my-experiment/.claude/hooks/my-hook.py \
+   "$DOTFILES/.claude/hooks/my-hook.py"
+
+# Re-run install (or manually symlink) to activate globally
+ln -sf "$DOTFILES/.claude/hooks/my-hook.py" ~/.claude/hooks/my-hook.py
+
+# Commit and push
+cd "$DOTFILES"
+git add .claude/hooks/my-hook.py
+git commit -m "feat: add my-hook"
 git push origin main
 ```
 
-### Pulling updates from main on another PC
-
-All machine branches have been deleted from remote. `main` is the only branch.
-Run this on each remaining PC:
+### Pulling updates on another PC
 
 ```bash
-# claude-dotfiles
-cd <claude-dotfiles-path>
-git fetch --prune
-git checkout main
-git pull origin main
-bash install.sh          # re-link any new files added to main
-
-# claude-code-in-action
-cd <claude-code-in-action-path>
-git fetch --prune
-git checkout main
+cd ~/Documents/spideynolove/claude-dotfiles
 git pull origin main
 
-# Delete stale local branches (safe — -d warns if unmerged)
-git branch | grep -v '^\* main' | xargs git branch -d
-```
+# Re-run steps 3–5 to pick up any new files added to main
+bash install.sh
 
-`--prune` cleans up dead remote-tracking refs for branches deleted on the
-remote. `-d` is safe — it refuses to delete branches with unmerged work and
-warns you instead of silently losing commits.
-
----
-
-## If another PC has leftover machine branches
-
-Since all remote branches are deleted, only local stragglers remain.
-
-```bash
-cd <repo-path>
-git fetch --prune          # remove stale remote-tracking refs
-
-# Check if a leftover branch has anything not in main:
-git log main..<branch> --oneline
-
-# Nothing unique → delete:
-git branch -d <branch>
-
-# Has unique commits → cherry-pick first, then delete:
-git checkout main
-git cherry-pick <commit-hash>
-git push origin main
-git branch -d <branch>
+DOTFILES=~/Documents/spideynolove/claude-dotfiles
+for f in "$DOTFILES/.claude/commands/"*.md; do
+  ln -sf "$f" ~/.claude/commands/$(basename "$f")
+done
+for skill_dir in "$DOTFILES/.claude/skills"/*/; do
+  skill=$(basename "$skill_dir")
+  mkdir -p ~/.claude/skills/"$skill"
+  ln -sf "$skill_dir/SKILL.md" ~/.claude/skills/"$skill"/SKILL.md
+done
 ```
 
 ---
 
 ## File ownership map
 
-| What | Source of truth | Never edit directly |
-|------|----------------|---------------------|
-| `~/.claude/CLAUDE.md` | `claude-dotfiles/.claude/CLAUDE.md` | ✓ (it's a symlink) |
-| `~/.claude/agents/*.md` | `claude-dotfiles/.claude/agents/` | ✓ |
-| `~/.claude/hooks/` | `claude-dotfiles/.claude/hooks/` | ✓ |
-| `~/.claude/skills/*/SKILL.md` | `claude-dotfiles/.claude/skills/` | ✓ |
-| `~/.claude/settings.json` | per-machine copy, not symlinked | edit freely |
-| `~/.claude/projects/` | local only, never synced | — |
-| `~/.claude/plugins/` | managed by Claude Code installer | — |
+| What | Source of truth | Rule |
+|------|----------------|------|
+| `~/.claude/CLAUDE.md` | `dotfiles/.claude/CLAUDE.md` | Never edit — it's a symlink |
+| `~/.claude/agents/*.md` | `dotfiles/.claude/agents/` | Never edit — symlinks |
+| `~/.claude/commands/*.md` | `dotfiles/.claude/commands/` | Never edit — symlinks |
+| `~/.claude/hooks/**` | `dotfiles/.claude/hooks/` | Never edit — symlinks |
+| `~/.claude/skills/*/SKILL.md` | `dotfiles/.claude/skills/` | Never edit — symlinks |
+| `~/.claude/settings.json` | Per-machine copy | Edit freely, don't commit |
+| `~/.claude/projects/` | Local only | Never sync |
+| `~/.claude/plugins/` | Claude Code managed | Never sync |
