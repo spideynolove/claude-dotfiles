@@ -31,6 +31,21 @@ branch.
 - `i5-gen12` (1 commit): browser MCP migration to dev-browser, real-browser-mcp
   guide
 
+## What was done (home-pc, 2026-04-07)
+
+Dotfiles folders renamed with `-global` suffix to prevent Claude Code and other
+tools from auto-loading them as project-local config when working inside the
+dotfiles repo itself.
+
+- `.claude/` → `.claude-global/`
+- `.agents/` → `.agents-global/`
+- `.codex/` → `.codex-global/`
+- `.gemini/` → `.gemini-global/`
+
+`install.sh` updated to reflect new paths. Agents removed from `~/.claude/agents/`
+(agents live only in `~/.agents/agents/`). Hooks removed from dotfiles source;
+hooks in `~/.claude/hooks/` are machine-local only.
+
 ---
 
 ## Fresh setup / refresh on any PC
@@ -82,7 +97,6 @@ rm -rf ~/.claude/agents
 rm -rf ~/.claude/commands
 rm -rf ~/.claude/hooks
 rm -rf ~/.claude/skills
-rm -rf ~/.claude/plugins
 rm -f  ~/.claude/CLAUDE.md
 rm -f  ~/.claude/settings.json
 rm -f  ~/.claude/settings.json.backup-*
@@ -100,6 +114,7 @@ What NOT to delete — these are all auto-managed by Claude Code:
 | `projects/`, `sessions/`, `session-env/` | Per-project state |
 | `todos/`, `shell-snapshots/`, `paste-cache/` | Session data |
 | `statsig/`, `telemetry/`, `stats-cache.json` | Telemetry |
+| `plugins/` | Claude Code managed — never delete |
 | `.credentials.json` | Auth — never delete this |
 
 ---
@@ -111,63 +126,16 @@ cd ~/Documents/spideynolove/claude-dotfiles
 bash install.sh
 ```
 
-This symlinks agents, CLAUDE.md, and `hooks/context-loader.sh` into `~/.claude/`.
+This symlinks CLAUDE.md, all commands, and all skills into `~/.claude/`.
 It also wires up Gemini, Qwen, and Codex configs if those tools are installed.
+Shared agents go into `~/.agents/agents/`.
 
 ---
 
-### Step 4 — Link remaining hooks and skills (install.sh gap)
-
-`install.sh` does not wire `hooks/UserPromptSubmit/`, `hooks/PostToolUse/`, or
-`skills/`. Do this manually:
+### Step 4 — Copy settings.json for this machine
 
 ```bash
-DOTFILES=~/Documents/spideynolove/claude-dotfiles
-
-# hooks/UserPromptSubmit
-mkdir -p ~/.claude/hooks/UserPromptSubmit
-for f in "$DOTFILES/.claude/hooks/UserPromptSubmit/"*; do
-  ln -sf "$f" ~/.claude/hooks/UserPromptSubmit/$(basename "$f")
-done
-
-# hooks/PostToolUse
-mkdir -p ~/.claude/hooks/PostToolUse
-for f in "$DOTFILES/.claude/hooks/PostToolUse/"*; do
-  ln -sf "$f" ~/.claude/hooks/PostToolUse/$(basename "$f")
-done
-
-# hooks/sync-skills-to-codex.py
-ln -sf "$DOTFILES/.claude/hooks/sync-skills-to-codex.py" \
-    ~/.claude/hooks/sync-skills-to-codex.py
-
-# skills
-for skill_dir in "$DOTFILES/.claude/skills"/*/; do
-  skill=$(basename "$skill_dir")
-  mkdir -p ~/.claude/skills/"$skill"
-  ln -sf "$skill_dir/SKILL.md" ~/.claude/skills/"$skill"/SKILL.md
-done
-```
-
----
-
-### Step 5 — Link missing commands (install.sh gap)
-
-`install.sh` only links a subset of commands. Link the rest:
-
-```bash
-DOTFILES=~/Documents/spideynolove/claude-dotfiles
-mkdir -p ~/.claude/commands
-for f in "$DOTFILES/.claude/commands/"*.md; do
-  ln -sf "$f" ~/.claude/commands/$(basename "$f")
-done
-```
-
----
-
-### Step 6 — Copy settings.json for this machine
-
-```bash
-cp ~/Documents/spideynolove/claude-dotfiles/.claude/settings.json \
+cp ~/Documents/spideynolove/claude-dotfiles/.claude-global/settings.json \
    ~/.claude/settings.json
 ```
 
@@ -179,17 +147,17 @@ Do NOT commit machine-specific edits back to `main`.
 
 ---
 
-### Step 7 — Verify
+### Step 5 — Verify
 
 ```bash
-echo "--- agents ---"  && ls -1 ~/.claude/agents/
 echo "--- commands ---" && ls -1 ~/.claude/commands/
-echo "--- hooks ---"   && ls -1 ~/.claude/hooks/
 echo "--- skills ---"  && ls -1 ~/.claude/skills/
+echo "--- agents ---"  && ls -1 ~/.agents/agents/
 echo "--- CLAUDE.md ---" && head -3 ~/.claude/CLAUDE.md
 ```
 
-Expected output: all files are symlinks pointing into `~/Documents/spideynolove/claude-dotfiles/`.
+Expected output: CLAUDE.md and commands/skills are symlinks pointing into
+`~/Documents/spideynolove/claude-dotfiles/.claude-global/`.
 
 ---
 
@@ -215,17 +183,17 @@ Experiment there → validate → then promote to global.
 ```bash
 DOTFILES=~/Documents/spideynolove/claude-dotfiles
 
-# Copy the file into the dotfiles repo
-cp ~/my-experiment/.claude/hooks/my-hook.py \
-   "$DOTFILES/.claude/hooks/my-hook.py"
+# Copy the file into the dotfiles repo (under .claude-global/)
+cp ~/my-experiment/.claude/commands/my-command.md \
+   "$DOTFILES/.claude-global/commands/my-command.md"
 
-# Re-run install (or manually symlink) to activate globally
-ln -sf "$DOTFILES/.claude/hooks/my-hook.py" ~/.claude/hooks/my-hook.py
+# Re-run install to activate globally
+bash "$DOTFILES/install.sh"
 
 # Commit and push
 cd "$DOTFILES"
-git add .claude/hooks/my-hook.py
-git commit -m "feat: add my-hook"
+git add .claude-global/commands/my-command.md
+git commit -m "feat: add my-command"
 git push origin main
 ```
 
@@ -235,18 +203,8 @@ git push origin main
 cd ~/Documents/spideynolove/claude-dotfiles
 git pull origin main
 
-# Re-run steps 3–5 to pick up any new files added to main
+# Re-run install to pick up any new files added to main
 bash install.sh
-
-DOTFILES=~/Documents/spideynolove/claude-dotfiles
-for f in "$DOTFILES/.claude/commands/"*.md; do
-  ln -sf "$f" ~/.claude/commands/$(basename "$f")
-done
-for skill_dir in "$DOTFILES/.claude/skills"/*/; do
-  skill=$(basename "$skill_dir")
-  mkdir -p ~/.claude/skills/"$skill"
-  ln -sf "$skill_dir/SKILL.md" ~/.claude/skills/"$skill"/SKILL.md
-done
 ```
 
 ---
@@ -255,11 +213,11 @@ done
 
 | What | Source of truth | Rule |
 |------|----------------|------|
-| `~/.claude/CLAUDE.md` | `dotfiles/.claude/CLAUDE.md` | Never edit — it's a symlink |
-| `~/.claude/agents/*.md` | `dotfiles/.claude/agents/` | Never edit — symlinks |
-| `~/.claude/commands/*.md` | `dotfiles/.claude/commands/` | Never edit — symlinks |
-| `~/.claude/hooks/**` | `dotfiles/.claude/hooks/` | Never edit — symlinks |
-| `~/.claude/skills/*/SKILL.md` | `dotfiles/.claude/skills/` | Never edit — symlinks |
+| `~/.claude/CLAUDE.md` | `dotfiles/.claude-global/CLAUDE.md` | Never edit — it's a symlink |
+| `~/.claude/commands/*.md` | `dotfiles/.claude-global/commands/` | Never edit — symlinks |
+| `~/.claude/skills/*/SKILL.md` | `dotfiles/.claude-global/skills/` | Never edit — symlinks |
+| `~/.agents/agents/*.md` | `dotfiles/.agents-global/agents/` | Never edit — symlinks |
+| `~/.claude/hooks/**` | Machine-local only | Edit freely, don't commit |
 | `~/.claude/settings.json` | Per-machine copy | Edit freely, don't commit |
 | `~/.claude/projects/` | Local only | Never sync |
-| `~/.claude/plugins/` | Claude Code managed | Never sync |
+| `~/.claude/plugins/` | Claude Code managed | Never sync, never delete |
