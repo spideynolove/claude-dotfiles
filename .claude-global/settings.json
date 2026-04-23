@@ -1,7 +1,59 @@
 {
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  },
+  "disabledMcpjsonServers": [
+    "claude_ai_Gmail",
+    "claude_ai_Google_Calendar",
+    "claude_ai_Google_Drive"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Glob|Grep|WebFetch|mcp__tilth__|mcp__code_review_graph__",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/env/.venv/bin/python3 $HOME/.claude/hooks/dedup.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git rev-parse --git-dir >/dev/null 2>&1 && $HOME/env/.venv/bin/code-review-graph update --skip-flows || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git rev-parse --git-dir >/dev/null 2>&1 && $HOME/env/.venv/bin/code-review-graph status || echo 'Not a git repo, skipping'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
   "statusLine": {
     "type": "command",
-    "command": "bash -c 'plugin_dir=$(ls -d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | tail -1); exec \"/home/hung/.bun/bin/bun\" \"${plugin_dir}src/index.ts\"'"
+    "command": "bash -c 'plugin_dir=$(ls -d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | tail -1); exec \"$HOME/.bun/bin/bun\" \"${plugin_dir}src/index.ts\"'"
+  },
+  "enabledPlugins": {
+    "claude-hud@claude-hud": true,
+    "review-loop@hamel-review": true,
+    "context-mode@context-mode": true
   },
   "extraKnownMarketplaces": {
     "claude-hud": {
@@ -9,13 +61,21 @@
         "source": "github",
         "repo": "jarrodwatts/claude-hud"
       }
+    },
+    "hamel-review": {
+      "source": {
+        "source": "github",
+        "repo": "hamelsmu/claude-review-loop"
+      }
+    },
+    "context-mode": {
+      "source": {
+        "source": "github",
+        "repo": "mksglu/context-mode"
+      }
     }
   },
-  "model": "claude-sonnet-4-6",
   "alwaysThinkingEnabled": true,
-  "effortLevel": "low",
-  "skipDangerousModePermissionPrompt": true,
-  "permissions": {
-    "defaultMode": "bypassPermissions"
-  }
+  "effortLevel": "medium",
+  "skipDangerousModePermissionPrompt": true
 }
