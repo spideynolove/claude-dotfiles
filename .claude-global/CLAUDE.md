@@ -58,3 +58,5 @@ Before any commit:
 - Parameterized queries (no string interpolation in SQL)
 - Sanitize HTML outputs (XSS prevention)
 - Error messages must not leak internal state
+
+@RTK.md

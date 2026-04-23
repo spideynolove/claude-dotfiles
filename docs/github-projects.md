@@ -134,6 +134,25 @@ Add to `settings.json`:
 
 ---
 
+## rtk — `rtk-ai/rtk`
+
+Token-optimized CLI proxy (60-90% savings on dev operations). Commands are transparently rewritten via a Claude Code hook.
+
+```bash
+RTK_VERSION=$(curl -s https://api.github.com/repos/rtk-ai/rtk/releases/latest \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'])")
+curl -L -o ~/.local/bin/rtk \
+    "https://github.com/rtk-ai/rtk/releases/download/${RTK_VERSION}/rtk-x86_64-unknown-linux-gnu"
+chmod a+x ~/.local/bin/rtk
+rtk --version && rtk gain
+```
+
+⚠️ Name collision: `reachingforthejack/rtk` (Rust Type Kit) uses the same binary name. Verify with `rtk gain` — if it fails, you have the wrong one.
+
+No MCP registration needed. Usage is via direct CLI calls and hook-based command rewriting.
+
+---
+
 ## Summary
 
 | Tool | Install method | Scope |
@@ -144,3 +163,4 @@ Add to `settings.json`:
 | code-review-graph | uv pip + `crg install` | Global MCP + per-project build |
 | token-savior | uv pip + `claude mcp add` | Global MCP |
 | review-loop | settings.json plugin | Claude Code plugin |
+| rtk | curl binary | `~/.local/bin` |

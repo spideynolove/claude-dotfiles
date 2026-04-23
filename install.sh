@@ -17,6 +17,7 @@ FLAT_SKILLS=(debug-issue explore-codebase refactor-safely review-changes)
 echo "=== Claude Code (~/.claude/) ==="
 
 cp_file "$SRC/CLAUDE.md" "$CLAUDE/CLAUDE.md"
+cp_file "$SRC/RTK.md" "$CLAUDE/RTK.md"
 
 mkdir -p "$CLAUDE/commands"
 for f in "$SRC/commands/"*.md; do
@@ -73,6 +74,20 @@ else
     echo "  tilth already installed"
 fi
 
+if ! command -v rtk >/dev/null 2>&1; then
+    echo "  installing rtk..."
+    RTK_VERSION=$(curl -s https://api.github.com/repos/rtk-ai/rtk/releases/latest \
+        | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'])")
+    curl -L -o /tmp/rtk \
+        "https://github.com/rtk-ai/rtk/releases/download/${RTK_VERSION}/rtk-x86_64-unknown-linux-gnu"
+    chmod a+x /tmp/rtk
+    mkdir -p "$HOME/.local/bin"
+    mv /tmp/rtk "$HOME/.local/bin/rtk"
+    echo "  rtk installed — verify with: rtk --version && rtk gain"
+else
+    echo "  rtk already installed"
+fi
+
 echo "  done"
 echo ""
 
@@ -85,7 +100,7 @@ echo "  done"
 echo ""
 
 echo "Install complete."
-echo "  ~/.claude/CLAUDE.md"
+echo "  ~/.claude/CLAUDE.md + RTK.md"
 echo "  ~/.claude/commands/ ($(ls "$CLAUDE/commands/" | wc -l) files)"
 echo "  ~/.claude/skills/   (${#DIR_SKILLS[@]} dir + ${#FLAT_SKILLS[@]} flat)"
 echo ""
