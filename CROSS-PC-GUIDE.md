@@ -64,25 +64,25 @@ drifted from the canonical dotfiles (experimental hooks, stale agents, etc.).
 
 ### Step 1 — Get the latest dotfiles
 
+Clone to any path you like — `install.sh` auto-detects its own location.
+
 **First time on this machine:**
 ```bash
-mkdir -p ~/Documents/spideynolove
-git clone git@github.com:spideynolove/claude-dotfiles.git \
-    ~/Documents/spideynolove/claude-dotfiles
+DOTFILES=~/wherever/you/want/claude-dotfiles   # set this to your preference
+git clone git@github.com:spideynolove/claude-dotfiles.git "$DOTFILES"
 ```
 
 **Already cloned — just pull:**
 ```bash
-cd ~/Documents/spideynolove/claude-dotfiles
+cd /path/to/claude-dotfiles
 git checkout main && git pull origin main
 ```
 
 Also pull `claude-code-in-action` if you use it for learning:
 ```bash
-mkdir -p ~/Public/gits
 git clone git@github.com:spideynolove/claude-code-in-action.git \
-    ~/Public/gits/claude-code-in-action
-# or: cd ~/Public/gits/claude-code-in-action && git pull origin main
+    /path/to/claude-code-in-action
+# or: cd /path/to/claude-code-in-action && git pull origin main
 ```
 
 ---
@@ -122,7 +122,7 @@ What NOT to delete — these are all auto-managed by Claude Code:
 ### Step 3 — Run the dotfiles installer
 
 ```bash
-cd ~/Documents/spideynolove/claude-dotfiles
+cd /path/to/claude-dotfiles
 bash install.sh
 ```
 
@@ -135,8 +135,7 @@ Shared agents go into `~/.agents/agents/`.
 ### Step 4 — Copy settings.json for this machine
 
 ```bash
-cp ~/Documents/spideynolove/claude-dotfiles/.claude-global/settings.json \
-   ~/.claude/settings.json
+cp /path/to/claude-dotfiles/.claude-global/settings.json ~/.claude/settings.json
 ```
 
 Edit `~/.claude/settings.json` for this machine if needed:
@@ -156,8 +155,8 @@ echo "--- agents ---"  && ls -1 ~/.agents/agents/
 echo "--- CLAUDE.md ---" && head -3 ~/.claude/CLAUDE.md
 ```
 
-Expected output: CLAUDE.md and commands/skills are symlinks pointing into
-`~/Documents/spideynolove/claude-dotfiles/.claude-global/`.
+Expected output: CLAUDE.md and commands/skills are copies from
+`/path/to/claude-dotfiles/.claude-global/`.
 
 ---
 
@@ -181,7 +180,7 @@ Experiment there → validate → then promote to global.
 ### Promoting a validated experiment to global
 
 ```bash
-DOTFILES=~/Documents/spideynolove/claude-dotfiles
+DOTFILES=/path/to/claude-dotfiles
 
 # Copy the file into the dotfiles repo (under .claude-global/)
 cp ~/my-experiment/.claude/commands/my-command.md \
@@ -200,7 +199,7 @@ git push origin main
 ### Pulling updates on another PC
 
 ```bash
-cd ~/Documents/spideynolove/claude-dotfiles
+cd /path/to/claude-dotfiles
 git pull origin main
 
 # Re-run install to pick up any new files added to main
@@ -213,10 +212,10 @@ bash install.sh
 
 | What | Source of truth | Rule |
 |------|----------------|------|
-| `~/.claude/CLAUDE.md` | `dotfiles/.claude-global/CLAUDE.md` | Never edit — it's a symlink |
-| `~/.claude/commands/*.md` | `dotfiles/.claude-global/commands/` | Never edit — symlinks |
-| `~/.claude/skills/*/SKILL.md` | `dotfiles/.claude-global/skills/` | Never edit — symlinks |
-| `~/.agents/agents/*.md` | `dotfiles/.agents-global/agents/` | Never edit — symlinks |
+| `~/.claude/CLAUDE.md` | `dotfiles/.claude-global/CLAUDE.md` | Never edit — re-run install.sh to update |
+| `~/.claude/commands/*.md` | `dotfiles/.claude-global/commands/` | Never edit — re-run install.sh to update |
+| `~/.claude/skills/*/SKILL.md` | `dotfiles/.claude-global/skills/` | Never edit — re-run install.sh to update |
+| `~/.agents/agents/*.md` | `dotfiles/.agents-global/agents/` | Never edit — re-run install.sh to update |
 | `~/.claude/hooks/**` | Machine-local only | Edit freely, don't commit |
 | `~/.claude/settings.json` | Per-machine copy | Edit freely, don't commit |
 | `~/.claude/projects/` | Local only | Never sync |

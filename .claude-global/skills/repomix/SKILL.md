@@ -35,7 +35,7 @@ All tools are available via `repomix.*` through mcporter.
 
 ```
 # Pack this repo (compress=true saves ~70% tokens, preserves signatures)
-mcporter call repomix.pack_codebase(directory: "/home/hung/Public/SPIDEY/claude-code-in-action", compress: true)
+mcporter call repomix.pack_codebase(directory: "/path/to/your/project", compress: true)
 # → result contains both outputId and outputFilePath
 ```
 
@@ -125,7 +125,7 @@ Create `repomix.config.json` in the project root:
 In the 04-uiux workflow, run repomix at the **start of whole-repo tasks** (before IntentSpec when working across multiple components or doing a full redesign).
 
 ```bash
-cd /home/hung/Public/SPIDEY/claude-code-in-action/04-uiux
+cd /path/to/claude-code-in-action/04-uiux
 repomix  # uses .repomixrc / repomix.config.json automatically
 ```
 
