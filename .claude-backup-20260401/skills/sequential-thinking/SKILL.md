@@ -1,1 +1,0 @@
-/home/hung/Documents/spideynolove/claude-dotfiles/.claude/skills/sequential-thinking//SKILL.md

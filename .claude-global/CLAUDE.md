@@ -31,6 +31,8 @@ If you pushed back and were wrong:
 
 State the correction factually and move on.
 
+Codex will review your output once you are done.
+
 ## Code Changes
 - Clean, minimal code only
 - No Docstrings or Comments - Anywhere                                                                
@@ -60,3 +62,17 @@ Before any commit:
 - Error messages must not leak internal state
 
 @RTK.md
+
+## code-review-graph
+
+When the `code-review-graph` MCP is connected, use its tools **before** `Read`/`Grep`/`Glob`:
+- `semantic_search_nodes` — find functions/classes by name or keyword
+- `query_graph` — trace callers, callees, imports, test coverage
+- `get_impact_radius` — understand blast radius before editing
+- `get_architecture_overview` — orient yourself in an unfamiliar codebase
+
+Fall back to `Read`/`Grep` only when the graph doesn't cover what you need.
+
+# graphify
+- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
+When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.

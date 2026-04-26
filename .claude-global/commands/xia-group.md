@@ -101,7 +101,7 @@ cat .claude/xia/XIALOGUE.md 2>/dev/null || echo "XIALOGUE_MISSING"
 
 ## Phase GN — Round N
 
-For each repo in order, run the full xia protocol (Phases 0–6).
+For each repo in order, run the full `/xia` protocol (Phases 0–6).
 
 **Before starting each round, print:**
 
@@ -109,10 +109,10 @@ For each repo in order, run the full xia protocol (Phases 0–6).
 ## Round [N] of [total] — [repo]
 
 Codebase state: [one sentence from XIALOGUE.md evolved state]
-Running xia now...
+Running /xia now...
 ```
 
-Then invoke `Skill(skill="xia", args="<repo> [focus]")` to run all phases 0–6.
+Then execute `/xia <repo> [focus]` — all phases 0–6 exactly as defined in `xia.md`.
 
 **Phase 3 dialogue still happens** — do not skip or auto-confirm it. User must confirm which gaps to borrow before Phase 4 proceeds.
 

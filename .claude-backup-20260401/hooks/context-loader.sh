@@ -1,1 +1,0 @@
-/home/hung/Documents/spideynolove/claude-dotfiles/.claude/hooks/context-loader.sh
