@@ -1,0 +1,5 @@
+prefix_rule(pattern=["rm", "-f", "gopenclaw"], decision="allow")
+prefix_rule(pattern=["env", "GOCACHE=/tmp/gocache-mission-review", "go", "test", "./store/postgres", "-tags=integration"], decision="allow")
+prefix_rule(pattern=["npm", "run", "dev"], decision="allow")
+prefix_rule(pattern=["curl", "-sS", "http://127.0.0.1:3000"], decision="allow")
+prefix_rule(pattern=["curl", "-sS", "-D", "-", "http://127.0.0.1:3000", "-o", "/tmp/sales-platform-home.html"], decision="allow")

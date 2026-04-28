@@ -1,0 +1,163 @@
+model = "gpt-5.5"
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "xhigh"
+
+[projects."/home/hung/Public/company/price"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/fastapi-building-data-science-applications"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/dex-arbitrage-bot"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/intraday-mod"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/matching-engine"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/quant-go-rust-demo"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/ctem-demo"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/temp/taobao-demo"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/gopenclaw"]
+trust_level = "trusted"
+
+[projects."/home/hung/MCPs/sequential-thinking-mcp-v2"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/gits/claude-code-in-action"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/demo"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/hungtran19940412/ht-web"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/sales-platform-v3-fe"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/all-demo"]
+trust_level = "trusted"
+
+[projects."/home/hung/Videos/JAVs/HZGD-327-中文字幕"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/manhhungdt06/gecko-shit"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/temp/temp-in-temp"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/CONSIDER/scrapy-rotating-proxies"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/gits/khoatienghan"]
+trust_level = "trusted"
+
+[projects."/home/hung/MCPs/sequential-thinking"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/coeus"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/hekate"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/vietnam-lottery-xsmb-analysis"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/hungtran19940412/ht-dashboard"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/software"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/fix"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/test"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/test"]
+trust_level = "trusted"
+
+[projects."/home/hung/Videos/temp-2"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/tung/all-demo"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/curl2scrapy"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/manhhungdt06/codex-plugin-cc"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/hungnm17/vn30-derivatives-trading-using-naive-bayes"]
+trust_level = "trusted"
+
+[projects."/home/hung/temp/ssh-issues"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/dat09/shit-web"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/dat09/dysco"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/tung/ui"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/codex-in-action"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/scrapy-redis"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/VIE-HU-001-PR-BJSE-API"]
+trust_level = "trusted"
+
+[projects."/home/hung/Public/company/price-apis"]
+trust_level = "trusted"
+
+[projects."/home/hung/Documents/spideynolove/code-review-graph"]
+trust_level = "trusted"
+
+[projects."/home/hung/temp/codex-upgrade"]
+trust_level = "trusted"
+
+[projects."/home/hung/temp/tech-choices"]
+trust_level = "trusted"
+
+[projects."/home/hung/temp/codex-issues"]
+trust_level = "trusted"
+
+[notice.model_migrations]
+"gpt-5.2-codex" = "gpt-5.3-codex"
+"gpt-5.3-codex" = "gpt-5.4"
+
+[agents]
+max_depth = 2
+max_threads = 6
+
+[features]
+codex_hooks = true
+js_repl = true
+multi_agent = true
+prevent_idle_sleep = true
+memories = true
+
+[memories]
+generate_memories = true
+use_memories = true
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4

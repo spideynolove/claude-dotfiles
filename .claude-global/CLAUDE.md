@@ -49,7 +49,7 @@ Codex will review your output once you are done.
 ## Common Env
 
 ### Local Python Dev
-- `source /home/hung/env/.venv/bin/activate` before using `python`
+- `source ~/env/.venv/bin/activate` before using `python`
 - `uv pip install xxx` before any new package installations.
 
 ## Security

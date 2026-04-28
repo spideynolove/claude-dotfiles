@@ -1,0 +1,1 @@
+/home/hung/.claude/skills/next-best-practices/SKILL.md

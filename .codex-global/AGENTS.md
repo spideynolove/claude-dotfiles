@@ -33,27 +33,102 @@ State the correction factually and move on.
 
 ## Code Changes
 - Clean, minimal code only
-- No Docstrings or Comments - Anywhere
-  - ❌ Docstrings in code
-  - ❌ Comments in code
-  - ❌ Docstrings in chat/code blocks
+- No Docstrings or Comments - Anywhere                                                                
+  - ❌ Docstrings in code                                                                             
+  - ❌ Comments in code                                                                               
+  - ❌ Docstrings in chat/code blocks                                                                 
   - ❌ Comments in chat/code blocks
+
+## Git Commits
+- NEVER create git commits automatically after completing a task
+- ONLY commit when explicitly asked by the user
+- Do not suggest committing unless the user asks
 
 ## Common Env
 
 ### Local Python Dev
-- `source /home/hung/env/.venv/bin/activate` before using `python`
+- `source ~/env/.venv/bin/activate` before using `python`
 - `uv pip install xxx` before any new package installations.
 
-## MCP Tools
+---
 
-Use `npx mcporter call` to invoke MCP tools:
-```
-npx mcporter call 'server.tool(key: "value")'
-```
+# Codex Agent Configuration
 
-Available servers: repomix, knowledge-graph, sequential-thinking, playwright, real-browser
+## Memory and Context
 
-## Multi-Agent
+Use native Codex memories for cross-session continuity.
 
-Subagent definitions live in `~/.agents/agents/`. Use the `codex` CLI's subagent mechanism or shell out to run tasks.
+`memories = true` with `generate_memories` and `use_memories` in `config.toml`.
+
+Use skills for on-demand workflows instead of keeping local MCP servers registered by default. Prefer `~/.agents/skills/<name>/SKILL.md` for user skills.
+
+Use mcporter when a skill needs MCP-backed tools without exposing that MCP server directly to Codex.
+
+Current preferred split:
+
+| Situation | Use |
+|-----------|-----|
+| User preferences, recurring repo patterns, prior decisions | Native Codex memories |
+| Structured reasoning and branch exploration | `sequential-thinking` skill |
+| Browser automation without native MCP token overhead | `playwright` skill through mcporter |
+| Code graph context and impact analysis | `code-review-graph` CLI or mcporter skill |
+| Broad repo packing | `repomix` skill |
+| Persistent graph memory | Do not use `mcp-knowledge-graph` unless explicitly requested |
+
+---
+
+## Multi-Agent Hierarchy
+
+Config: `max_depth = 2`, `max_threads = 6`
+
+Enables a 3-tier tree: Main → Coordinators (up to 6) → Workers (each coordinator spawns its own).
+
+### Effective patterns
+
+**Parallel research**: Spawn N agents each scoped to a different part of the codebase. Main synthesizes.
+
+**Spec → Implement → Review pipeline**:
+- Agent 1: write spec/plan
+- Agent 2: implement (receives spec)
+- Agent 3: review (receives both)
+
+**Domain isolation**: Keep write scopes separate. Never run write-capable agents in parallel against the same files.
+
+### Thread budget
+6 threads = safe for most API rate limits. Only increase for pure read/research tasks. Never run write-capable agents in parallel against the same files.
+
+### depth = 2 vs depth = 1
+- depth 1 (flat): all sub-agents are peers, no further delegation
+- depth 2 (this config): coordinators can spawn workers — task decomposition *within* sub-agents
+- depth 3+: coordination overhead exceeds benefit in most cases
+
+---
+
+## js_repl Use Cases
+
+- Parse and transform JSON tool outputs inline
+- Batch multiple tool calls in one turn
+- Data filtering/manipulation before acting on results
+- Quick calculations without spawning a subprocess
+
+## Hooks and Token Economy
+
+Codex hooks are enabled with `codex_hooks = true`.
+
+Global hooks live in `~/.codex/hooks.json` and `~/.codex/hooks/`.
+
+Current hook policy:
+
+| Event | Purpose |
+|-------|---------|
+| `SessionStart` | Load or build code-review-graph context |
+| `PreToolUse` | Run duplicate-call guard and RTK Bash rewrite hook |
+| `PostToolUse` | Update code-review-graph after Bash or apply_patch edits |
+
+Prefer RTK wrappers for noisy commands when they preserve the needed evidence.
+
+Do not register local MCP servers natively in Codex just to access occasional tools. Put the workflow in a skill and call it through CLI or mcporter.
+
+`code-review-graph` and RTK are required baseline tools for this environment.
+
+@/home/hung/.codex/RTK.md
