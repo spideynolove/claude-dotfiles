@@ -8,7 +8,14 @@ SRC="$DOTFILES/.claude-global"
 cp_file() {
     local src="$1" dst="$2"
     mkdir -p "$(dirname "$dst")"
+    [ -L "$dst" ] && [ ! -e "$dst" ] && rm "$dst"
     cp "$src" "$dst"
+}
+
+clean_dangling() {
+    find "$1" -maxdepth 2 -type l 2>/dev/null | while read -r link; do
+        [ ! -e "$link" ] && rm "$link"
+    done
 }
 
 DIR_SKILLS=(agents-refine graphify handoff lightpanda playwright reddit2md repomix sequential-thinking x2md xia)
@@ -17,25 +24,23 @@ FLAT_SKILLS=(debug-issue explore-codebase refactor-safely review-changes)
 # ---------------------------------------------------------------------------
 echo "=== Claude Code (~/.claude/) ==="
 
-cp_file "$SRC/CLAUDE.md"  "$CLAUDE/CLAUDE.md"
-cp_file "$SRC/RTK.md"     "$CLAUDE/RTK.md"
+clean_dangling "$CLAUDE/commands"
+clean_dangling "$CLAUDE/skills"
 
-# settings.json — always overwrite so token-saving changes propagate
+cp_file "$SRC/CLAUDE.md"     "$CLAUDE/CLAUDE.md"
+cp_file "$SRC/RTK.md"        "$CLAUDE/RTK.md"
 cp_file "$SRC/settings.json" "$CLAUDE/settings.json"
 
-# commands
 mkdir -p "$CLAUDE/commands"
 for f in "$SRC/commands/"*.md; do
     cp_file "$f" "$CLAUDE/commands/$(basename "$f")"
 done
 
-# hooks
 mkdir -p "$CLAUDE/hooks"
 for f in "$SRC/hooks/"*.py; do
     cp_file "$f" "$CLAUDE/hooks/$(basename "$f")"
 done
 
-# skills
 mkdir -p "$CLAUDE/skills"
 for skill in "${DIR_SKILLS[@]}"; do
     mkdir -p "$CLAUDE/skills/$skill"
@@ -52,18 +57,128 @@ echo "  skills:   ${#DIR_SKILLS[@]} dir + ${#FLAT_SKILLS[@]} flat"
 echo ""
 
 # ---------------------------------------------------------------------------
-echo "=== Python Tools (venv: ~/env/.venv) ==="
-source "$HOME/env/.venv/bin/activate" 2>/dev/null || { echo "  warn: venv not found at ~/env/.venv"; }
-uv pip install code-review-graph
-uv pip install "token-savior-recall[mcp]"
-code-review-graph install claude-code
-echo "  done"
+echo "=== Agents (~/.agents/) ==="
+
+ASRC="$DOTFILES/.agents-global"
+mkdir -p "$HOME/.agents/agents" "$HOME/.agents/skills"
+clean_dangling "$HOME/.agents/agents"
+
+for f in "$ASRC/agents/"*.md; do
+    cp_file "$f" "$HOME/.agents/agents/$(basename "$f")"
+done
+cp -r "$ASRC/skills/." "$HOME/.agents/skills/"
+
+echo "  agents: $(ls "$HOME/.agents/agents/"*.md 2>/dev/null | wc -l) files"
+echo "  skills: $(ls -d "$HOME/.agents/skills/"*/ 2>/dev/null | wc -l) dirs"
 echo ""
 
 # ---------------------------------------------------------------------------
-echo "=== MCP Servers ==="
-claude mcp add context-mode -- npx -y context-mode 2>/dev/null && echo "  context-mode registered" || echo "  context-mode already registered"
-claude mcp add token-savior -- "$HOME/env/.venv/bin/token-savior" 2>/dev/null && echo "  token-savior registered" || echo "  token-savior already registered"
+echo "=== Codex (~/.codex/) ==="
+
+CSRC="$DOTFILES/.codex-global"
+CODEX="$HOME/.codex"
+clean_dangling "$CODEX"
+
+cp_file "$CSRC/AGENTS.md"   "$CODEX/AGENTS.md"
+cp_file "$CSRC/config.toml" "$CODEX/config.toml"
+cp_file "$CSRC/hooks.json"  "$CODEX/hooks.json"
+cp_file "$CSRC/RTK.md"      "$CODEX/RTK.md"
+
+mkdir -p "$CODEX/hooks"
+for f in "$CSRC/hooks/"*.py; do
+    cp_file "$f" "$CODEX/hooks/$(basename "$f")"
+done
+
+mkdir -p "$CODEX/rules"
+for f in "$CSRC/rules/"*; do
+    cp_file "$f" "$CODEX/rules/$(basename "$f")"
+done
+
+echo "  AGENTS.md, config.toml, hooks.json, RTK.md"
+echo "  hooks: $(ls "$CODEX/hooks/"*.py 2>/dev/null | wc -l) files"
+echo ""
+
+# ---------------------------------------------------------------------------
+echo "=== OpenCode (~/.opencode/) ==="
+
+OSRC="$DOTFILES/.opencode-global"
+OPENCODE="$HOME/.opencode"
+
+cp_file "$OSRC/AGENTS.md"     "$OPENCODE/AGENTS.md"
+cp_file "$OSRC/opencode.json" "$OPENCODE/opencode.json"
+cp_file "$OSRC/package.json"  "$OPENCODE/package.json"
+
+mkdir -p "$OPENCODE/commands"
+for f in "$OSRC/commands/"*; do
+    cp_file "$f" "$OPENCODE/commands/$(basename "$f")"
+done
+
+mkdir -p "$OPENCODE/skills"
+cp -r "$OSRC/skills/." "$OPENCODE/skills/"
+
+echo "  AGENTS.md, opencode.json, package.json"
+echo "  commands: $(ls "$OPENCODE/commands/" | wc -l) files"
+echo "  skills:   $(ls -d "$OPENCODE/skills/"*/ 2>/dev/null | wc -l) dirs"
+echo ""
+
+# ---------------------------------------------------------------------------
+echo "=== Gemini (~/.gemini/) ==="
+
+GEMINI="$HOME/.gemini"
+mkdir -p "$GEMINI"
+
+# GEMINI.md — symlink to ~/.claude/CLAUDE.md (single source of truth)
+[ -L "$GEMINI/GEMINI.md" ] && rm "$GEMINI/GEMINI.md"
+[ -f "$GEMINI/GEMINI.md" ] && mv "$GEMINI/GEMINI.md" "$GEMINI/GEMINI.md.bak"
+ln -s "$CLAUDE/CLAUDE.md" "$GEMINI/GEMINI.md"
+echo "  GEMINI.md → ~/.claude/CLAUDE.md"
+
+# commands — symlink to ~/.claude/commands (shared slash commands)
+[ -L "$GEMINI/commands" ] && rm "$GEMINI/commands"
+ln -s "$CLAUDE/commands" "$GEMINI/commands"
+echo "  commands/ → ~/.claude/commands/"
+
+# MCP: code-review-graph (gemini not a CRG-supported platform — wire manually)
+python3 - <<'PYEOF'
+import json, os
+path = os.path.expanduser("~/.gemini/settings.json")
+try:
+    with open(path) as f:
+        cfg = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    cfg = {}
+cfg.setdefault("mcpServers", {})
+cfg["mcpServers"]["code-review-graph"] = {"command": "code-review-graph", "args": ["serve"]}
+with open(path, "w") as f:
+    json.dump(cfg, f, indent=2)
+print("  code-review-graph MCP → ~/.gemini/settings.json")
+PYEOF
+
+echo ""
+
+# ---------------------------------------------------------------------------
+echo "=== Python Tools ==="
+
+# code-review-graph: uv tool install → ~/.local/bin/ (on PATH, no venv activation needed)
+# hooks call ["code-review-graph", ...] as subprocess — must be on PATH
+uv tool install --reinstall code-review-graph
+echo "  code-review-graph: $(code-review-graph --version)"
+
+# token-savior: stays in venv — MCP config uses full venv path intentionally
+source "$HOME/env/.venv/bin/activate" 2>/dev/null || { echo "  warn: venv not found at ~/env/.venv"; }
+uv pip install "token-savior-recall[mcp]"
+echo "  token-savior: $("$HOME/env/.venv/bin/token-savior" --version 2>/dev/null || echo installed)"
+
+# Register CRG with all detected platforms (claude-code, codex, opencode, ...)
+# gemini excluded — handled above via settings.json
+code-review-graph install -y --platform all
+echo "  CRG registered for all detected platforms"
+echo ""
+
+# ---------------------------------------------------------------------------
+echo "=== MCP Servers (Claude Code) ==="
+claude mcp add -s user context-mode -- npx -y context-mode 2>/dev/null && echo "  context-mode registered" || echo "  context-mode already registered"
+claude mcp add -s user token-savior -- "$HOME/env/.venv/bin/token-savior" 2>/dev/null && echo "  token-savior registered" || echo "  token-savior already registered"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -118,7 +233,7 @@ echo ""
 echo "=== Install complete ==="
 echo ""
 echo "Next steps:"
-echo "  1. Restart Claude Code to pick up settings.json + hooks"
+echo "  1. Restart Claude Code / Codex / OpenCode to pick up settings + hooks"
 echo "  2. Per project: cd <project> && code-review-graph build"
 echo "  3. Verify hooks: /context-mode:ctx-doctor in a new session"
 echo "  4. Verify RTK:   rtk gain"
