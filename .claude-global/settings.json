@@ -4,9 +4,9 @@
     "defaultMode": "bypassPermissions"
   },
   "disabledMcpjsonServers": [
-    "claude.ai Gmail",
-    "claude.ai Google Calendar",
-    "claude.ai Google Drive"
+    "claude_ai_Gmail",
+    "claude_ai_Google_Calendar",
+    "claude_ai_Google_Drive"
   ],
   "hooks": {
     "PreToolUse": [
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/hung/.claude/hooks/dedup.py",
+            "command": "~/env/.venv/bin/python ~/.claude/hooks/dedup.py",
             "timeout": 5
           }
         ]
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/hung/.claude/hooks/crg-preread.py",
+            "command": "~/env/.venv/bin/python ~/.claude/hooks/crg-preread.py",
             "timeout": 5
           }
         ]
@@ -58,8 +58,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/hung/.claude/hooks/crg-session-start.py",
+            "command": "~/env/.venv/bin/python ~/.claude/hooks/crg-session-start.py",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/home/hung/.nvm/versions/node/v22.22.0/bin/node\" \"/home/hung/.claude/hooks/context-mode-cache-heal.mjs\""
           }
         ]
       }
@@ -72,7 +80,8 @@
   "enabledPlugins": {
     "claude-hud@claude-hud": true,
     "review-loop@hamel-review": true,
-    "context-mode@context-mode": true
+    "context-mode@context-mode": true,
+    "codex@openai-codex": true
   },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {

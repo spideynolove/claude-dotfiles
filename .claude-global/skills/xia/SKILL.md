@@ -76,22 +76,20 @@ Xỉa state is **project-local**, stored inside the repo and committed to git:
 
 **Input:** current working directory
 
-**Commands — run in this order:**
+**Step 1 — Check prior Xỉa state:**
 
 ```bash
 cat .claude/xia/XIALOGUE.md 2>/dev/null || echo "XIALOGUE_MISSING"
 ```
 
-```bash
-npx mcporter call "repomix.pack_codebase(directory: \".\", compress: true)"
-```
+**Step 2 — Index and analyze codebase A:**
 
-```bash
-npx mcporter call "sequential-thinking.start_session(problem: \"What does A currently do, and where are its gaps relative to the focus: $ARGUMENTS?\", success_criteria: \"Gap list for comparison against B\", session_type: \"coding\")"
-```
+Use `ctx_batch_execute` with commands suited to the project type (e.g. `find . -name "*.py" | head -40`, `cat pyproject.toml`, `ls src/`). Goal: understand what A does and what it lacks relative to `$ARGUMENTS`.
 
-```bash
-npx mcporter call "sequential-thinking.add_thought(content: \"A CAPABILITIES: [list]. A GAPS: [list based on codebase read].\", confidence: 0.9)"
+**Step 3 — Gap reasoning via sequential-thinking skill:**
+
+```
+Skill(skill: "sequential-thinking", args: "What does A currently do, and where are its gaps relative to: $ARGUMENTS?")
 ```
 
 **Required output — print exactly:**
@@ -109,17 +107,15 @@ npx mcporter call "sequential-thinking.add_thought(content: \"A CAPABILITIES: [l
 
 **Input:** `$ARGUMENTS` (repo + optional focus)
 
-**Commands:**
+**Step 1 — Pack repo B using the repomix skill:**
 
-```bash
-npx mcporter call "repomix.pack_remote_repository(remote: \"<repo>\", compress: true)"
-Read(file_path: "<outputFilePath>")
+```
+Skill(skill: "repomix", args: "<repo>")
 ```
 
-If focus keyword given, also grep:
-```bash
-Grep(pattern: "<focus>", path: "<outputFilePath>")
-```
+**Step 2 — If focus keyword given, search the packed output:**
+
+Use `ctx_batch_execute` with grep commands against the repomix output path.
 
 **Required output:**
 
@@ -134,12 +130,14 @@ Grep(pattern: "<focus>", path: "<outputFilePath>")
 
 ## Phase 2 — Gap Analysis
 
-**Commands:**
+**Step 1 — Search B output for patterns relevant to Phase 0 gaps:**
 
-```bash
-npx mcporter call "sequential-thinking.create_branch(name: \"gap-analysis\", from_thought: \"<last-thought-id>\", purpose: \"Compare A vs B capabilities\")"
+Use `ctx_batch_execute` with grep commands against the repomix output path.
 
-npx mcporter call "sequential-thinking.add_thought(content: \"B SOLVES BUT A LACKS: [list]. A ALREADY HANDLES: [list]. INTEGRATION FRICTION: [per candidate: low/medium/high + reason].\", confidence: 0.9)"
+**Step 2 — Structured comparison via sequential-thinking skill:**
+
+```
+Skill(skill: "sequential-thinking", args: "B SOLVES BUT A LACKS: [list]. A ALREADY HANDLES: [list]. INTEGRATION FRICTION per candidate: low/medium/high + reason.")
 ```
 
 **Required output — this exact table:**
@@ -181,14 +179,21 @@ Do not proceed to Phase 4 until user confirms.
 
 **Constraints check:** Re-read the constraints listed at the top of this session. Every line of adapted code must comply.
 
-If GitNexus is indexed (`.gitnexus/` exists):
+**Step 1 — Locate relevant symbols in A:**
 
-```bash
-gitnexus_query --symbol "<relevant-local-symbol>"
-gitnexus_impact --symbol "<symbol-to-be-changed>" --depth 2
+If `.code-review-graph/` exists in the project:
+```
+semantic_search_nodes(query: "<relevant-local-symbol>")
+get_impact_radius(node_id: "<symbol-to-be-changed>")
 ```
 
-Adapt the chosen pattern:
+Otherwise fall back to token-savior:
+```
+mcp__token-savior__find_symbol(name: "<symbol>")
+mcp__token-savior__get_change_impact(symbol: "<symbol>")
+```
+
+**Step 2 — Adapt the chosen pattern:**
 - Apply constraints from CLAUDE.md (no comments, no docstrings, etc.)
 - Rename to match A's naming conventions
 - Strip what doesn't apply to A's context
