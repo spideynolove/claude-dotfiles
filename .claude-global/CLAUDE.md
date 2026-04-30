@@ -63,6 +63,16 @@ Before any commit:
 
 @RTK.md
 
+## Tool Selection: Read vs RTK
+
+For **exploration** (not editing), use Bash with RTK so the hook compresses output:
+- `rtk read file.py` instead of `Read` tool
+- `rtk grep "pattern" .` instead of `Grep` tool
+- `rtk find "*.py" .` instead of `Glob`/`find`
+- `rtk ls .` instead of `ls`
+
+Use native `Read` **only** when you will immediately `Edit` that file (Edit requires file content in context).
+
 ## code-review-graph
 
 When the `code-review-graph` MCP is connected, use its tools **before** `Read`/`Grep`/`Glob`:
