@@ -11,7 +11,7 @@ try:
         json.dumps({"tool": tool_name, "input": tool_input}, sort_keys=True).encode()
     ).hexdigest()[:16]
 
-    cache_dir = pathlib.Path("/tmp/claude-dedup")
+    cache_dir = pathlib.Path(os.environ.get("XDG_CACHE_HOME", str(pathlib.Path.home() / ".cache"))) / "claude-dedup"
     cache_dir.mkdir(exist_ok=True)
     cache_file = cache_dir / f"{session_id}.txt"
 

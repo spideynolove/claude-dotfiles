@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/hung/.codex/hooks/crg_session_start.py",
+            "command": "python3 $HOME/.codex/hooks/crg_session_start.py",
             "timeout": 30,
             "statusMessage": "Loading code-review-graph context"
           }
@@ -19,7 +19,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/hung/.codex/hooks/dedup.py",
+            "command": "python3 $HOME/.codex/hooks/dedup.py",
             "timeout": 5,
             "statusMessage": "Checking duplicate tool call"
           }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 /home/hung/.codex/hooks/rtk_codex.py",
+            "command": "python3 $HOME/.codex/hooks/rtk_codex.py",
             "timeout": 10,
             "statusMessage": "Checking RTK rewrite"
           }

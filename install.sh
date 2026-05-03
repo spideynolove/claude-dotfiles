@@ -14,7 +14,7 @@ cp_file() {
 
 clean_dangling() {
     find "$1" -maxdepth 2 -type l 2>/dev/null | while read -r link; do
-        [ ! -e "$link" ] && rm "$link"
+        [ ! -e "$link" ] && rm "$link" || true
     done
 }
 
@@ -30,6 +30,13 @@ clean_dangling "$CLAUDE/skills"
 cp_file "$SRC/CLAUDE.md"     "$CLAUDE/CLAUDE.md"
 cp_file "$SRC/RTK.md"        "$CLAUDE/RTK.md"
 cp_file "$SRC/settings.json" "$CLAUDE/settings.json"
+NODE=$(command -v node 2>/dev/null || echo "node")
+python3 - "$CLAUDE/settings.json" "$NODE" <<'PYEOF'
+import sys
+path, node = sys.argv[1], sys.argv[2]
+with open(path) as f: content = f.read()
+with open(path, "w") as f: f.write(content.replace("__NODE__", node))
+PYEOF
 
 mkdir -p "$CLAUDE/commands"
 for f in "$SRC/commands/"*.md; do
