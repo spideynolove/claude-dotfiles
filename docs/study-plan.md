@@ -83,7 +83,6 @@ Invoke: `Skill(skill="name", args="$ARGUMENTS")`
 | `user-invocable` | No | `false` = hide from `/` menu (Claude-only invocation) |
 | `disable-model-invocation` | No | `true` = only manual invocation |
 | `paths` | No | Glob patterns — skill loads only in matching directories |
-| `targets` | No | (custom) Which CLIs to sync to via sync-to-codex |
 
 **Without `name` and `description`: the skill is documentation, not a tool. Claude cannot invoke it.**
 

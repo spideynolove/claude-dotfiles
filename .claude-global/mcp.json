@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "skillnet": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "fmdogancan/skillnet-mcp:latest"],
+      "env": {
+        "API_KEY": "${OPENROUTER_API_KEY}",
+        "BASE_URL": "https://openrouter.ai/api/v1",
+        "SKILLNET_MODEL": "openai/gpt-4o"
+      }
+    }
+  }
+}

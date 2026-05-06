@@ -1,6 +1,19 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": ["AGENTS.md"],
-  "mcp": {},
+  "mcp": {
+    "code-review-graph": {
+      "type": "local",
+      "command": "code-review-graph",
+      "args": [
+        "serve"
+      ]
+    },
+    "skillnet": {
+      "type": "local",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "fmdogancan/skillnet-mcp:latest"]
+    }
+  },
   "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"]
 }
