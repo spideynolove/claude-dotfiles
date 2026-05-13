@@ -8,7 +8,7 @@
 | `github.com/mksglu/context-mode` | latest | `/plugin` marketplace |
 | `github.com/jahala/tilth` | v0.6.3 | `~/.local/bin/tilth` |
 | `github.com/tirth8205/code-review-graph` | 2.3.2 | `~/env/.venv` (from fork) |
-| `github.com/Mibayy/token-savior` | 2.6.0 | `~/env/.venv` |
+| `github.com/Mibayy/token-savior` | 2.6.0 | optional `~/env/.venv` |
 
 ---
 
@@ -162,12 +162,14 @@ SessionStart: git check && code-review-graph status || skip
 
 ## token-savior (`github.com/Mibayy/token-savior`)
 
-**What it does:** Persistent memory engine across sessions + structural code navigation. Stores decisions, conventions, bugfixes, guardrails in SQLite WAL+FTS5. Re-injects relevant memory as compact delta at session start. 90-tool MCP server.
+**What it does:** Optional persistent memory engine across sessions plus structural code navigation. Stores decisions, conventions, bugfixes, and guardrails in SQLite WAL+FTS5.
 
-**How installed:**
+**Default policy:** Do not register token-savior as an always-on MCP server in Claude Code or Codex. Use native Codex memories, context-mode, and code-review-graph first. Install token-savior only for explicit recall workflows.
+
+**Optional install:**
 ```bash
-uv pip install "token-savior-recall[mcp]"   # NOT [mcp,memory-vector] — avoids 2GB torch/CUDA
-claude mcp add -s user token-savior -- /home/hung/env/.venv/bin/token-savior
+source ~/env/.venv/bin/activate
+uv pip install "token-savior-recall[mcp]"
 ```
 
 **Why not `memory-vector`:** Pulls in PyTorch + full NVIDIA CUDA stack (~2GB). FTS5 BM25 search (included in base) is sufficient; vector embeddings are an optional upgrade.
@@ -190,12 +192,7 @@ claude mcp add -s user token-savior -- /home/hung/env/.venv/bin/token-savior
 | 2 | `memory_search` | ~60 | If Layer 1 matched |
 | 3 | `memory_get` | ~200 | If Layer 2 confirmed |
 
-**TODO:** Set `WORKSPACE_ROOTS` env var:
-```bash
-claude mcp add -s user token-savior \
-  -e WORKSPACE_ROOTS=/home/hung/Documents/MAIN/gitlabs/price-v2,/home/hung/Public/SPIDEY \
-  -- /home/hung/env/.venv/bin/token-savior
-```
+If an explicit workflow needs token-savior MCP, register it temporarily with a narrow workspace scope and remove it afterward.
 
 ---
 
@@ -205,9 +202,9 @@ claude mcp add -s user token-savior \
 
 | Event | What fires |
 |---|---|
-| Session start | context-mode injects routing rules; token-savior injects past memory delta; code-review-graph reports graph status |
+| Session start | context-mode injects routing rules; code-review-graph reports graph status |
 | Edit/Write/Bash | RTK strips noise before output reaches Claude; context-mode sandboxes large outputs; code-review-graph incrementally updates graph |
-| Before `/compact` | context-mode indexes session events to FTS5; token-savior saves session summary to persistent memory |
+| Before `/compact` | context-mode indexes session events to FTS5 |
 
 ### Explicit (Claude calls on demand, guided by CLAUDE.md routing)
 
@@ -217,14 +214,13 @@ claude mcp add -s user token-savior \
 | Read a file | `tilth_read` | Read dumps whole file; tilth outlines first |
 | Understand impact of a change | `get_impact_radius` | Can't be done with grep |
 | Code review | `detect_changes` + `get_review_context` | Token-efficient vs reading whole files |
-| Recall past decision | `memory_index` → `memory_search` → `memory_get` | Only token-savior has persistent cross-session memory |
+| Recall past decision | Native Codex memories or explicit token-savior workflow | Avoid default MCP bloat |
 | Large command output | `ctx_execute` / `ctx_batch_execute` | Keeps raw data out of context |
 
 ### Layered session model
 
 ```
 Session starts
-  → token-savior: inject relevant past memory
   → context-mode: inject routing rules (use sandbox tools, not Bash)
   → code-review-graph: report graph status for this project
 
@@ -238,11 +234,9 @@ On every Edit/Write/Bash
 
 Before /compact
   → context-mode: index session events (state survives compaction)
-  → token-savior: save session summary (recalled next session)
 
 Next session
-  → Claude already knows: what was decided, what files were edited,
-    what conventions apply, what bugs were fixed
+  → context-mode restores relevant session state after compaction
 ```
 
 ### What each tool owns
@@ -253,8 +247,8 @@ Next session
 | Token reduction (tool output / context) | context-mode |
 | Token reduction (code reading) | tilth |
 | Code structure / call graph | code-review-graph |
-| Memory across sessions | token-savior |
-| Context window survival across `/compact` | context-mode (events) + token-savior (memory) |
+| Memory across sessions | Native Codex memories or explicit token-savior workflow |
+| Context window survival across `/compact` | context-mode events |
 
 ---
 
@@ -264,9 +258,6 @@ Next session
 # Reinstall code-review-graph after fork changes
 source ~/env/.venv/bin/activate
 uv pip install /home/hung/Public/SPIDEY/code-review-graph
-
-# Update token-savior
-uv pip install --upgrade "token-savior-recall[mcp]"
 
 # Update context-mode
 /context-mode:ctx-upgrade

@@ -171,11 +171,6 @@ echo "=== Python Tools ==="
 uv tool install --reinstall code-review-graph
 echo "  code-review-graph: $(code-review-graph --version)"
 
-# token-savior: stays in venv — MCP config uses full venv path intentionally
-source "$HOME/env/.venv/bin/activate" 2>/dev/null || { echo "  warn: venv not found at ~/env/.venv"; }
-uv pip install "token-savior-recall[mcp]"
-echo "  token-savior: $("$HOME/env/.venv/bin/token-savior" --version 2>/dev/null || echo installed)"
-
 # Register CRG with all detected platforms (claude-code, codex, opencode, ...)
 # gemini excluded — handled above via settings.json
 code-review-graph install -y --platform all
@@ -185,7 +180,7 @@ echo ""
 # ---------------------------------------------------------------------------
 echo "=== MCP Servers (Claude Code) ==="
 claude mcp add -s user context-mode -- npx -y context-mode 2>/dev/null && echo "  context-mode registered" || echo "  context-mode already registered"
-claude mcp add -s user token-savior -- "$HOME/env/.venv/bin/token-savior" 2>/dev/null && echo "  token-savior registered" || echo "  token-savior already registered"
+claude mcp remove token-savior 2>/dev/null && echo "  token-savior removed from default MCP" || echo "  token-savior not registered"
 echo ""
 
 # ---------------------------------------------------------------------------

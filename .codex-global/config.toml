@@ -149,7 +149,7 @@ max_depth = 2
 max_threads = 6
 
 [features]
-codex_hooks = true
+hooks = true
 js_repl = true
 multi_agent = true
 prevent_idle_sleep = true
@@ -161,3 +161,8 @@ use_memories = true
 
 [tui.model_availability_nux]
 "gpt-5.5" = 4
+
+[mcp_servers.code-review-graph]
+command = "uvx"
+args = ["code-review-graph", "serve"]
+type = "stdio"

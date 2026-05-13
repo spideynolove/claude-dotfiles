@@ -187,10 +187,10 @@ semantic_search_nodes(query: "<relevant-local-symbol>")
 get_impact_radius(node_id: "<symbol-to-be-changed>")
 ```
 
-Otherwise fall back to token-savior:
+Otherwise fall back to tilth or `rg`:
 ```
-mcp__token-savior__find_symbol(name: "<symbol>")
-mcp__token-savior__get_change_impact(symbol: "<symbol>")
+tilth_search "<symbol>"
+rg "<symbol>"
 ```
 
 **Step 2 — Adapt the chosen pattern:**

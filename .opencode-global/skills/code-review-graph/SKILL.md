@@ -1,6 +1,6 @@
 ---
 name: code-review-graph
-description: Use code-review-graph through CLI or mcporter for codebase maps, impact analysis, semantic search, graph status, and review context without keeping the MCP server natively registered in Codex.
+description: Use code-review-graph through native MCP, CLI, or mcporter for codebase maps, impact analysis, semantic search, graph status, and review context.
 compatibility: claude-code
 ---
 
@@ -19,7 +19,7 @@ code-review-graph update --skip-flows
 code-review-graph detect-changes --brief
 ```
 
-Use mcporter when an MCP tool is specifically useful without exposing the server as a native Codex MCP:
+Use mcporter when an MCP tool is specifically useful and native MCP is not available:
 
 ```bash
 npx mcporter list code-review-graph --schema
