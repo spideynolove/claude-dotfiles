@@ -18,51 +18,7 @@ Invoke repomix **before** any task that requires whole-repository understanding:
 
 ---
 
-## MCP tools (preferred — no file I/O required)
-
-All tools are available via `repomix.*` through mcporter.
-
-| Tool | Use case |
-|------|----------|
-| `pack_codebase` | Pack a local directory into a single context blob |
-| `pack_remote_repository` | Pack a GitHub repo by URL or `user/repo` shorthand |
-| `read_repomix_output` | Read a specific line range from a previously packed output |
-| `grep_repomix_output` | Search packed output without re-reading everything |
-| `file_system_read_file` | Read a single file via repomix's filesystem access |
-| `file_system_read_directory` | List directory contents via repomix |
-
-### Typical MCP invocation pattern
-
-```
-# Pack this repo (compress=true saves ~70% tokens, preserves signatures)
-mcporter call repomix.pack_codebase(directory: "/path/to/your/project", compress: true)
-# → result contains both outputId and outputFilePath
-```
-
-**CRITICAL — mcporter outputId is dead on arrival:** Each `npx mcporter call` spawns a fresh subprocess. The `outputId` only lives in the server process that created it. A second `mcporter call` to `read_repomix_output` uses a different process — the ID is always gone.
-
-**Always use `outputFilePath` from the pack result instead:**
-
-```
-# After pack, use the file path directly — never outputId via mcporter
-Read(outputFilePath)   ← use Claude Code's Read tool on the returned path
-
-# If you need to grep the output:
-Grep(pattern: "IntentSpec", path: "<outputFilePath>")
-```
-
-`read_repomix_output` and `grep_repomix_output` only work when repomix runs as a persistent MCP server (autoStart in settings.json). Via mcporter, they always fail.
-
-### Remote repo invocation
-
-```
-mcporter call repomix.pack_remote_repository(remote: "yamadashy/repomix", compress: true)
-mcporter call repomix.pack_remote_repository(remote: "https://github.com/user/repo", compress: false)
-```
-
----
-
-## CLI usage (when you need to write output files)
+## CLI usage (primary method)
 
 ```bash
 # Pack current directory to XML (AI-optimized, default)
@@ -81,6 +37,20 @@ repomix --remote user/repo --remote-branch main -o output.xml
 # Use a config file
 repomix --config repomix.config.json
 ```
+
+---
+
+## MCP tools (optional — only when repomix is a persistent MCP server)
+
+`mcporter call repomix.*` fails with "Unknown MCP server" unless repomix is registered in Claude Code's MCP settings as a persistent server (`autoStart: true`). By default it is not — use CLI above instead.
+
+If repomix IS configured as a persistent MCP server (via `settings.json`), these tools are available:
+
+| Tool | Use case |
+|------|----------|
+| `pack_codebase` | Pack a local directory — returns `outputFilePath`, use that not `outputId` |
+| `pack_remote_repository` | Pack a GitHub repo by URL or `user/repo` shorthand |
+| `grep_repomix_output` | Search packed output (persistent server only) |
 
 ---
 

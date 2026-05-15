@@ -49,7 +49,7 @@ Progressive disclosure framework for structured cognition and codebase analysis.
 
 ```
 # Check if session already loaded (server auto-loads last session on startup)
-mcporter call sequential-thinking.analyze_session()
+mcporter call sequential-thinking.analyze_session
 
 # If no active session, start one
 mcporter call sequential-thinking.start_session(
@@ -204,13 +204,13 @@ mcporter call sequential-thinking.export_session(
 
 ### list_sessions / load_session
 ```
-mcporter call sequential-thinking.list_sessions()
+mcporter call sequential-thinking.list_sessions
 mcporter call sequential-thinking.load_session(session_id: "<id>")
 ```
 
 ### analyze_session
 ```
-mcporter call sequential-thinking.analyze_session()
+mcporter call sequential-thinking.analyze_session
 ```
 Returns stats or `{"error": ...}` if no active session — use this before start_session
 
