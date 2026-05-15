@@ -208,6 +208,62 @@ bash install.sh
 
 ---
 
+## History sync (project context across machines)
+
+Project conversation history lives in a separate **private** repo `ai-history`
+at `~/Documents/ai-history/`. The tool history dirs are symlinked into it:
+
+```
+~/.claude/projects  → ~/Documents/ai-history/claude-projects/
+~/.codex/sessions   → ~/Documents/ai-history/codex-sessions/
+~/.gemini/history   → ~/Documents/ai-history/gemini-history/
+```
+
+Git LFS is used to track `*.json` and `*.jsonl` files.
+
+### First-time setup (primary machine only)
+
+```bash
+cd /path/to/claude-dotfiles
+bash setup-history.sh
+```
+
+This migrates existing history, creates the GitHub repo, and pushes.
+
+### Before switching to another machine
+
+```bash
+bash /path/to/claude-dotfiles/sync-history.sh push
+```
+
+### After arriving on a new/other machine
+
+```bash
+# If dotfiles not yet cloned:
+git clone git@github.com:spideynolove/claude-dotfiles.git ~/Documents/claude-dotfiles
+
+# Install everything including history symlinks:
+bash ~/Documents/claude-dotfiles/install.sh
+
+# Pull latest history (LFS objects):
+bash ~/Documents/claude-dotfiles/sync-history.sh pull
+```
+
+`install.sh` auto-clones `ai-history` and creates symlinks on any machine where
+`~/Documents/ai-history/` doesn't exist yet.
+
+### Codex memories
+
+`~/.codex/memories/` is its own git repo and is synced by `sync-history.sh`
+automatically (push and pull). Make sure it has a remote configured:
+
+```bash
+git -C ~/.codex/memories remote -v
+# if empty: git -C ~/.codex/memories remote add origin git@github.com:spideynolove/codex-memories.git
+```
+
+---
+
 ## File ownership map
 
 | What | Source of truth | Rule |
@@ -218,5 +274,8 @@ bash install.sh
 | `~/.agents/agents/*.md` | `dotfiles/.agents-global/agents/` | Never edit — re-run install.sh to update |
 | `~/.claude/hooks/**` | Machine-local only | Edit freely, don't commit |
 | `~/.claude/settings.json` | Per-machine copy | Edit freely, don't commit |
-| `~/.claude/projects/` | Local only | Never sync |
+| `~/.claude/projects/` | `ai-history` repo (private) | Symlinked — sync with sync-history.sh |
+| `~/.codex/sessions/` | `ai-history` repo (private) | Symlinked — sync with sync-history.sh |
+| `~/.gemini/history/` | `ai-history` repo (private) | Symlinked — sync with sync-history.sh |
+| `~/.codex/memories/` | Own git repo | Synced with sync-history.sh |
 | `~/.claude/plugins/` | Claude Code managed | Never sync, never delete |

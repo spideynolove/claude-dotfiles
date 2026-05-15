@@ -1,5 +1,21 @@
 # Token Tool Strategy
 
+## Operating Model
+
+The goal is not just to save tokens during an interactive session. The goal is to build an unattended coding pipeline that can keep working when no human is sitting next to the PC.
+
+The intended loop:
+
+| Stage | Default executor | Purpose |
+|---|---|---|
+| Dispatch | `claude -p`, Claude Agent SDK, or scheduled shell job | Start work programmatically with the existing Claude Code tool stack |
+| Execution | Haiku where the task is bounded | Fast, cheap implementation and routine investigation |
+| Strategy escalation | `/advisor` in Claude Code, Anthropic Advisor API, or OpenRouter two-call prototype | Ask Opus for approach review only when strategic value justifies it |
+| Quality gate | Codex through `codex-plugin-cc` or native Codex CLI | Independent correctness, adversarial, and regression review |
+| Continuity | context-mode, Codex memories, CRG indexes, logs | Resume or audit work without reloading raw context |
+
+This is why the stack is split instead of simplified to one tool. There are many token-reduction and code-intelligence codebases, and several overlap. The strategy is to assign each environment a clear ownership lane, then test which lane produces the best cost, quality, and autonomy.
+
 ## Baseline
 
 The default tool stack should keep always-on surface area small and route heavier capabilities through explicit workflows.
@@ -13,6 +29,16 @@ The default tool stack should keep always-on surface area small and route heavie
 | Structural code intelligence | `code-review-graph` | Baseline across Claude Code, Codex, OpenCode, Gemini |
 | Persistent agent memory | Native memory first | Codex memories, context-mode session index, explicit token-savior workflow only |
 | Review and delegation | `codex-plugin-cc` | Claude Code to Codex peer review |
+
+The split is deliberate:
+
+| Environment | Primary role | Tooling bias |
+|---|---|---|
+| `~/.claude` | Automated execution and Claude-native workflows | context-mode, tilth, CRG, `/advisor`, `claude -p` |
+| `~/.codex` | Quality review and alternative agent loop | native memories, CRG, RTK hooks, review/adversarial review |
+| OpenCode | Plugin and DCP comparison path | DCP, RTK equivalent, CRG skill or MCP |
+
+Do not judge a tool only by whether it saves tokens in one interactive session. Judge whether it helps the unattended loop finish more work per credit with fewer bad merges.
 
 ---
 
@@ -45,17 +71,49 @@ Do not register token-savior as an always-on MCP server in Claude Code or Codex.
 
 ### Advisor policy
 
-Advisor is an Anthropic API beta tool, not a documented Claude Code `settings.json` baseline. Do not document `advisorModel` as a supported Claude Code setting unless Claude Code documents it.
+The original strategy was wrong to treat Advisor as unavailable in Claude Code. There are three separate access paths:
 
-For custom API harnesses, use `advisor_20260301` with:
+| Path | How | When |
+|---|---|---|
+| Claude Code CLI | `/advisor` slash command | Day-to-day interactive sessions |
+| Custom Anthropic API harness | `advisor_20260301` beta header + tool definition | Custom agents that call Anthropic directly |
+| OpenRouter prototype | Two client-orchestrated calls | Pre-testing executor/advisor economics |
+
+For Claude Code, type `/advisor` in any session to enable Opus as advisor for that session. No `settings.json` key, model config, or custom harness is needed.
+
+For custom Anthropic API harnesses, use `advisor_20260301` with:
 
 | Concern | Policy |
 |---|---|
 | Pairing | Advisor model must be at least as capable as executor |
-| Timing | Call after light orientation, before committing to an approach, and before final delivery on difficult tasks |
-| Cost control | Track conversation-level call count client-side |
-| Caching | Enable only for long loops expecting at least three advisor calls |
+| Timing | After orientation, before committing to approach, before final delivery on hard tasks |
+| Cost control | Track conversation-level call count client-side; set `max_uses` per request |
+| Caching | `keep: "all"` on extended thinking to avoid advisor-side cache misses |
 | Failure mode | Executor continues if advisor is unavailable, rate-limited, or over capacity |
+
+For OpenRouter, do not use `advisor_20260301`; that beta tool is Anthropic API only. Prototype the pattern with two separate OpenAI-compatible calls: Haiku as executor, then Opus as strategic reviewer. Use `OPENROUTER_API_KEY` from `~/.secrets`.
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
+
+executor = client.chat.completions.create(
+    model="anthropic/claude-haiku-4-5-20251001",
+    messages=[{"role": "user", "content": "your task"}],
+)
+
+advisor = client.chat.completions.create(
+    model="anthropic/claude-opus-4-7",
+    messages=[
+        {"role": "user", "content": f"Review this approach strategically: {executor.choices[0].message.content}"}
+    ],
+)
+```
 
 Reference: https://platform.claude.com/docs/en/agents-and-tools/tool-use/advisor-tool
 
@@ -89,6 +147,61 @@ token-savior is installed only when an explicit workflow needs it. It is not par
 ### Review and delegation
 
 Use `/codex:review` for implementation correctness checks and `/codex:adversarial-review` for design or approach challenges. Treat Claude and Codex as peer reviewers. Deterministic tests remain the final evidence.
+
+### Programmatic execution — `claude -p` and Agent SDK
+
+Starting 2026-06-15, paid Claude plans receive a dedicated monthly credit covering:
+- `claude -p` (Claude Code as a subprocess)
+- Claude Agent SDK
+- Claude Code GitHub Actions
+- Third-party apps built on the Agent SDK
+
+`claude -p` inherits the full `~/.claude` config including MCP servers, hooks, and skills. This is the preferred programmatic path for using the existing Claude Code tool stack from scripts, CI, or local automation without building a separate agent harness.
+
+```bash
+claude -p "run code-review-graph impact analysis on the last commit and summarize risk"
+
+claude -p "review PR diff and flag security issues" --output-format json
+```
+
+For day-to-day work, prefer `/advisor` inside Claude Code sessions and `claude -p` for programmatic execution. Use direct Anthropic API Advisor only when building a custom harness. Use OpenRouter only to pre-test the two-call executor/advisor pattern or compare economics.
+
+Note: `claude -p` usage before June 15 draws from standard API quota. Plan accordingly.
+
+### Haiku executor policy
+
+Use Haiku as the default executor when the work is bounded enough to verify mechanically.
+
+| Task type | Executor |
+|---|---|
+| Single-module edits, docs updates, scripted refactors, log triage | Haiku |
+| Multi-file implementation with clear tests and review gate | Haiku first, Opus advisor if approach risk appears |
+| Ambiguous architecture, cross-service design, high-risk migrations | Sonnet or Opus-level reasoning before execution |
+| Final quality challenge | Codex review or adversarial review |
+
+The point is not that Haiku is always better than Sonnet. The point is that cheap executors become viable when the process adds structure: CRG for code context, RTK/context-mode for token control, tests for evidence, and Codex as a separate reviewer.
+
+### Codex quality gate
+
+Codex is not just another executor. Its role in this strategy is independent quality control.
+
+Use `codex-plugin-cc` from Claude Code when Claude produced the work:
+
+| Situation | Gate |
+|---|---|
+| Routine implementation | `/codex:review` |
+| Design looks plausible but may be overfit | `/codex:adversarial-review` |
+| Claude is stuck or looping | `codex-rescue` |
+| Programmatic pipeline | `claude -p` produces work, Codex CLI reviews diff, deterministic tests decide pass/fail |
+
+The minimum unattended pipeline should be:
+
+```bash
+claude -p "implement the next planned task and leave a concise handoff"
+codex review
+```
+
+For stronger automation, the orchestrator should run implementation, tests, Codex review, and a final summary as separate steps. Do not let the same model both implement and be the only reviewer.
 
 ---
 

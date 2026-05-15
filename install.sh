@@ -232,6 +232,45 @@ echo "  done"
 echo ""
 
 # ---------------------------------------------------------------------------
+echo "=== History (~/.claude/projects, ~/.codex/sessions, ~/.gemini/history) ==="
+
+HISTORY_DIR="$HOME/Documents/ai-history"
+GITHUB_USER="${GITHUB_USER:-spideynolove}"
+
+wire_history_symlink() {
+    local target="$1" link="$2"
+    if [ -L "$link" ]; then
+        echo "  $link already symlinked"
+        return
+    fi
+    mkdir -p "$target"
+    if [ -d "$link" ]; then
+        echo "  WARNING: $link is a real dir — run setup-history.sh to migrate"
+        return
+    fi
+    mkdir -p "$(dirname "$link")"
+    ln -s "$target" "$link"
+    echo "  $link → $target"
+}
+
+if [ ! -d "$HISTORY_DIR/.git" ]; then
+    echo "  cloning ai-history from GitHub..."
+    git clone "git@github.com:$GITHUB_USER/ai-history.git" "$HISTORY_DIR" 2>/dev/null \
+        && git -C "$HISTORY_DIR" lfs pull \
+        || echo "  WARNING: could not clone ai-history — run setup-history.sh on primary machine first"
+else
+    echo "  ai-history already present"
+fi
+
+if [ -d "$HISTORY_DIR/.git" ]; then
+    wire_history_symlink "$HISTORY_DIR/claude-projects" "$HOME/.claude/projects"
+    wire_history_symlink "$HISTORY_DIR/codex-sessions"  "$HOME/.codex/sessions"
+    wire_history_symlink "$HISTORY_DIR/gemini-history"  "$HOME/.gemini/history"
+fi
+
+echo ""
+
+# ---------------------------------------------------------------------------
 echo "=== Install complete ==="
 echo ""
 echo "Next steps:"
@@ -239,6 +278,5 @@ echo "  1. Restart Claude Code / Codex / OpenCode to pick up settings + hooks"
 echo "  2. Per project: cd <project> && code-review-graph build"
 echo "  3. Verify hooks: /context-mode:ctx-doctor in a new session"
 echo "  4. Verify RTK:   rtk gain"
-echo "  5. Sync to LAN:  rsync -av --exclude='projects/' --exclude='file-history/' \\"
-echo "       --exclude='context-mode/' --exclude='backups/' --exclude='paste-cache/' \\"
-echo "       --exclude='.credentials.json' ~/.claude/ hung@192.168.100.122:~/.claude/"
+echo "  5. Before switching PCs: bash sync-history.sh push"
+echo "  6. After arriving on new PC: bash install.sh && bash sync-history.sh pull"
