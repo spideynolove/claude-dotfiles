@@ -102,7 +102,6 @@ Current preferred split:
 | Browser automation | `playwright` skill through mcporter |
 | Code graph context and impact analysis | `code-review-graph` CLI or mcporter skill |
 | Broad repo packing | `repomix` skill |
-| Knowledge graph export | `graphify` skill |
 
 ---
 
@@ -131,7 +130,3 @@ Prefer RTK wrappers for noisy commands when they preserve the needed evidence.
 `code-review-graph` and RTK are required baseline tools for this environment.
 
 ---
-
-# graphify
-- **graphify** skill - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.

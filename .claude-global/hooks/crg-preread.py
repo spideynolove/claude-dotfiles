@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
-import json, sys, sqlite3, pathlib, os
+import json, sys, sqlite3, pathlib, os, hashlib
 
 try:
     data = json.load(sys.stdin)
     inp = data.get("tool_input", {})
     file_path = inp.get("file_path", "")
     if not file_path:
+        sys.exit(0)
+
+    resolved = str(pathlib.Path(file_path).resolve())
+    session_id = data.get("session_id", os.environ.get("CLAUDE_SESSION_ID", "unknown"))
+    cache_dir = pathlib.Path(os.environ.get("XDG_CACHE_HOME", str(pathlib.Path.home() / ".cache"))) / "claude-dedup"
+    cache_dir.mkdir(exist_ok=True)
+    preread_cache = cache_dir / f"preread-{session_id}.txt"
+    fp_key = hashlib.sha256(resolved.encode()).hexdigest()[:16]
+    seen = set(preread_cache.read_text().splitlines()) if preread_cache.exists() else set()
+    if fp_key in seen:
         sys.exit(0)
 
     cwd = pathlib.Path(os.getcwd())
@@ -22,9 +32,9 @@ try:
         sys.exit(0)
 
     try:
-        rel_path = str(pathlib.Path(file_path).relative_to(repo_root))
+        rel_path = str(pathlib.Path(resolved).relative_to(repo_root))
     except ValueError:
-        rel_path = file_path
+        rel_path = resolved
 
     con = sqlite3.connect(db_path)
     cur = con.cursor()
@@ -64,6 +74,9 @@ try:
         lines.append(f"  depends on: {', '.join(deps[:3])}")
     lines.append("  → Use MCP tools (query_graph, get_impact_radius) for deeper analysis.")
     print("\n".join(lines))
+
+    with preread_cache.open("a") as f:
+        f.write(fp_key + "\n")
 
 except Exception:
     pass

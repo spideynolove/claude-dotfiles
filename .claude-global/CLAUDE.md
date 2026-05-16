@@ -52,6 +52,11 @@ Codex will review your output once you are done.
 - `source ~/env/.venv/bin/activate` before using `python`
 - `uv pip install xxx` before any new package installations.
 
+### SQLite
+- The `sqlite3` CLI is NOT installed on this machine. Do not call it — it will fail with `command not found`.
+- A `.db` file is just a file. Use Python's built-in `sqlite3` module instead, e.g. `python3 -c "import sqlite3; c=sqlite3.connect('foo.db'); print(c.execute('SELECT COUNT(*) FROM t').fetchone())"`.
+- This applies to every SQLite project regardless of repo. Default to Python; never reach for the CLI.
+
 ## Security
 
 Before any commit:
@@ -62,6 +67,16 @@ Before any commit:
 - Error messages must not leak internal state
 
 @RTK.md
+
+## Web Fetching
+
+Priority order — always try earlier options first:
+1. `ctx_fetch_and_index` (context-mode) — 24h TTL cache, keeps raw HTML out of context
+2. `lightpanda` skill — for JS-heavy or bot-blocking sites
+3. `playwright` skill — for interactive pages requiring clicks/auth
+4. `WebFetch` — last resort only for known static pages
+
+Never use `WebFetch` as the first attempt for an unknown site.
 
 ## Tool Selection: Read vs RTK
 
@@ -111,7 +126,3 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 2. Use `detect_changes` for code review.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
-
-# graphify
-- **graphify** (`~/.claude/skills/graphify/SKILL.md`) - any input to knowledge graph. Trigger: `/graphify`
-When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` before doing anything else.

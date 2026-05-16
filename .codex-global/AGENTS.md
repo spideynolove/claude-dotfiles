@@ -111,6 +111,16 @@ Enables a 3-tier tree: Main → Coordinators (up to 6) → Workers (each coordin
 - Data filtering/manipulation before acting on results
 - Quick calculations without spawning a subprocess
 
+## Web Fetching
+
+Priority order for unknown sites:
+- Use `ctx_fetch_and_index` when context-mode is available.
+- Use the `lightpanda` skill for JS-heavy or bot-blocking pages.
+- Use the `playwright` skill for interactive pages requiring clicks or auth.
+- Use plain fetch tools only for known static pages.
+
+Do not make a plain fetch the first attempt for an unknown site.
+
 ## Hooks and Token Economy
 
 Codex hooks are enabled with `codex_hooks = true`.

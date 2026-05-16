@@ -1,4 +1,8 @@
 {
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "includeCoAuthoredBy": false,
   "permissions": {
     "defaultMode": "bypassPermissions"
@@ -11,7 +15,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Read|Glob|Grep|WebFetch|mcp__",
+        "matcher": "Glob|Grep|WebFetch",
         "hooks": [
           {
             "type": "command",
@@ -62,26 +66,18 @@
             "timeout": 10
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "__NODE__ \"$HOME/.claude/hooks/context-mode-cache-heal.mjs\""
-          }
-        ]
       }
     ]
   },
   "statusLine": {
     "type": "command",
-    "command": "bash -c 'plugin_dir=$(ls -d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print $(NF-1) \"\\t\" $(0) }'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec \"$(which bun)\" --env-file /dev/null \"${plugin_dir}src/index.ts\"'"
+    "command": "bash -c 'plugin_dir=$(ls -d \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print $(NF-1) \"\\t\" $(0) }'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); exec \"/home/hung/.bun/bin/bun\" --env-file /dev/null \"${plugin_dir}src/index.ts\"'"
   },
   "enabledPlugins": {
     "claude-hud@claude-hud": true,
-    "review-loop@hamel-review": true,
     "context-mode@context-mode": true,
-    "codex@openai-codex": true
+    "codex@openai-codex": false,
+    "superpowers@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {
@@ -101,12 +97,6 @@
       "source": {
         "source": "github",
         "repo": "openai/codex-plugin-cc"
-      }
-    },
-    "hamel-review": {
-      "source": {
-        "source": "github",
-        "repo": "hamelsmu/claude-review-loop"
       }
     },
     "ui-ux-pro-max-skill": {
@@ -129,7 +119,7 @@
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
+  "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized"
 }

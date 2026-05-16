@@ -18,8 +18,10 @@ clean_dangling() {
     done
 }
 
-DIR_SKILLS=(agents-refine graphify handoff lightpanda playwright reddit2md repomix sequential-thinking x2md xia)
+DIR_SKILLS=(lightpanda playwright repomix sequential-thinking xia)
 FLAT_SKILLS=(debug-issue explore-codebase refactor-safely review-changes)
+# kept in repo but not synced to any machine
+SKIP_SKILLS=(agents-refine graphify handoff reddit2md x2md)
 
 # ---------------------------------------------------------------------------
 echo "=== Claude Code (~/.claude/) ==="
@@ -73,7 +75,11 @@ clean_dangling "$HOME/.agents/agents"
 for f in "$ASRC/agents/"*.md; do
     cp_file "$f" "$HOME/.agents/agents/$(basename "$f")"
 done
-cp -r "$ASRC/skills/." "$HOME/.agents/skills/"
+for _sd in "$ASRC/skills/"/*/; do
+    _sk=$(basename "$_sd")
+    [[ " ${SKIP_SKILLS[*]} " == *" $_sk "* ]] && continue
+    cp -r "$_sd" "$HOME/.agents/skills/$_sk/"
+done
 
 echo "  agents: $(ls "$HOME/.agents/agents/"*.md 2>/dev/null | wc -l) files"
 echo "  skills: $(ls -d "$HOME/.agents/skills/"*/ 2>/dev/null | wc -l) dirs"
@@ -121,7 +127,11 @@ for f in "$OSRC/commands/"*; do
 done
 
 mkdir -p "$OPENCODE/skills"
-cp -r "$OSRC/skills/." "$OPENCODE/skills/"
+for _sd in "$OSRC/skills/"/*/; do
+    _sk=$(basename "$_sd")
+    [[ " ${SKIP_SKILLS[*]} " == *" $_sk "* ]] && continue
+    cp -r "$_sd" "$OPENCODE/skills/$_sk/"
+done
 
 echo "  AGENTS.md, opencode.json, package.json"
 echo "  commands: $(ls "$OPENCODE/commands/" | wc -l) files"
