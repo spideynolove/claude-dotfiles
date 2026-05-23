@@ -15,55 +15,26 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Glob|Grep|WebFetch",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/env/.venv/bin/python ~/.claude/hooks/dedup.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/env/.venv/bin/python ~/.claude/hooks/crg-preread.py",
-            "timeout": 5
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
             "command": "rtk hook claude"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|Bash",
-        "hooks": [
+          },
           {
             "type": "command",
-            "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph update --skip-flows >/dev/null 2>&1 || true",
-            "timeout": 30
+            "command": "~/env/.venv/bin/python ~/.claude/hooks/grep-to-rgrep.py",
+            "timeout": 5
           }
         ]
       }
     ],
     "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
-            "command": "~/env/.venv/bin/python ~/.claude/hooks/crg-session-start.py",
-            "timeout": 10
+            "command": "\"/home/hung/.claude/hooks/context-mode-cache-heal.mjs\""
           }
         ]
       }
@@ -76,8 +47,9 @@
   "enabledPlugins": {
     "claude-hud@claude-hud": true,
     "context-mode@context-mode": true,
-    "codex@openai-codex": false,
-    "superpowers@claude-plugins-official": true
+    "codex@openai-codex": true,
+    "superpowers@claude-plugins-official": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true
   },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {
@@ -119,7 +91,7 @@
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "medium",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-daltonized"
 }
