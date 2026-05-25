@@ -85,12 +85,25 @@ Priority order — always try earlier options first:
 
 Never use `WebFetch` as the first attempt for an unknown site.
 
-## Tool Selection: Read vs RTK
+## code-review-graph: review / refactor / impact activation
 
-For **exploration** (not editing), use Bash with RTK so the hook compresses output:
-- `rtk read file.py` instead of `Read` tool
-- `rtk grep "pattern" .` instead of `Grep` tool
-- `rtk find "*.py" .` instead of `Glob`/`find`
-- `rtk ls .` instead of `ls`
+**For code review, refactor planning, or impact analysis, START with code-review-graph,
+not git diff or raw file reads.** On a review/refactor/impact prompt, a hook injects
+code-review-graph's first-pass change analysis (`detect-changes --brief`) into context.
+Treat that injected summary as your starting point.
 
-Use native `Read` **only** when you will immediately `Edit` that file (Edit requires file content in context).
+**Routing rule:**
+1. Use code-review-graph tooling to identify the risky files, functions, callers, and
+   affected tests — the injected brief, plus the CLI (`code-review-graph detect-changes`,
+   `code-review-graph status`) or mcporter/MCP graph tools if registered on this agent.
+2. Hand the narrowed files/symbols to **tilth** (`tilth_read`, `tilth_search`) for precise
+   reading.
+3. `git diff` remains valid **after** CRG has identified the risky areas — it is not
+   forbidden, just not the first-pass tool.
+
+**Boundary:** tilth owns normal code reading/search. code-review-graph owns review,
+impact, dependency relationships, and architecture questions. Do not call code-review-graph
+for ordinary file/symbol exploration.
+
+If the injected context says the graph is unavailable, run `code-review-graph build` once,
+then proceed.

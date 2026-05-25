@@ -134,11 +134,29 @@ Current hook policy:
 | `SessionStart` | Load or build code-review-graph context |
 | `PreToolUse` | Run duplicate-call guard and RTK Bash rewrite hook |
 | `PostToolUse` | Update code-review-graph after Bash or apply_patch edits |
+| `UserPromptSubmit` | Inject code-review-graph change analysis on review/refactor/impact prompts; record context-mode prompt context |
 
 Prefer RTK wrappers for noisy commands when they preserve the needed evidence.
 
 Do not register local MCP servers natively in Codex just to access occasional tools. Put the workflow in a skill and call it through CLI or mcporter.
 
 `code-review-graph` and RTK are required baseline tools for this environment.
+
+## code-review-graph: review / refactor / impact activation
+
+For code review, refactor planning, or impact analysis, START with code-review-graph, not
+git diff or raw file reads. On a review/refactor/impact prompt, the `UserPromptSubmit` hook
+injects `code-review-graph detect-changes --brief` into context — treat it as your starting
+point.
+
+Routing rule:
+1. Use code-review-graph tooling (the injected brief, the `code-review-graph` CLI, or the
+   mcporter skill) to identify risky files, functions, callers, and affected tests.
+2. Hand the narrowed files/symbols to tilth (`tilth_read`, `tilth_search`) for precise
+   reading.
+3. `git diff` is valid after CRG identifies the risky areas — not first.
+
+Do not call code-review-graph for ordinary file/symbol exploration; that is tilth's job. If
+the injected context says the graph is unavailable, run `code-review-graph build` once.
 
 @/home/hung/.codex/RTK.md

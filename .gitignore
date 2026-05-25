@@ -9,3 +9,4 @@
 
 # Machine-specific MCP paths
 .mcporter/
+temp/
