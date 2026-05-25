@@ -12,7 +12,7 @@ class RtkCodexHookTest(unittest.TestCase):
             "session_id": "test",
         }
         result = subprocess.run(
-            ["python3", "/home/hung/.codex/hooks/rtk_codex.py"],
+            ["python3", "~/.codex/hooks/rtk_codex.py"],
             input=json.dumps(payload),
             text=True,
             capture_output=True,
@@ -26,12 +26,12 @@ class DedupHookTest(unittest.TestCase):
     def test_duplicate_command_is_silent_and_allowed(self):
         payload = {
             "tool_name": "Bash",
-            "tool_input": {"command": "sed -n '1,220p' /home/hung/.codex/hooks.json"},
+            "tool_input": {"command": "sed -n '1,220p' ~/.codex/hooks.json"},
             "session_id": "dedup-test",
         }
         for _ in range(2):
             result = subprocess.run(
-                ["python3", "/home/hung/.codex/hooks/dedup.py"],
+                ["python3", "~/.codex/hooks/dedup.py"],
                 input=json.dumps(payload),
                 text=True,
                 capture_output=True,

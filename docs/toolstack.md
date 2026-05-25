@@ -104,11 +104,11 @@ Adds `tilth_edit` with hash-anchored lines — rejects edits if file changed sin
 
 **How installed:**
 ```bash
-uv pip install /home/hung/Public/SPIDEY/code-review-graph   # from personal fork
+uv pip install ~/Public/SPIDEY/code-review-graph   # from personal fork
 code-review-graph install claude-code
 ```
 
-**Personal fork:** `/home/hung/Public/SPIDEY/code-review-graph`
+**Personal fork:** `~/Public/SPIDEY/code-review-graph`
 
 **Patches applied to fork (3 commits):**
 
@@ -257,7 +257,7 @@ Next session
 ```bash
 # Reinstall code-review-graph after fork changes
 source ~/env/.venv/bin/activate
-uv pip install /home/hung/Public/SPIDEY/code-review-graph
+uv pip install ~/Public/SPIDEY/code-review-graph
 
 # Update context-mode
 /context-mode:ctx-upgrade

@@ -159,4 +159,4 @@ Routing rule:
 Do not call code-review-graph for ordinary file/symbol exploration; that is tilth's job. If
 the injected context says the graph is unavailable, run `code-review-graph build` once.
 
-@/home/hung/.codex/RTK.md
+@~/.codex/RTK.md
