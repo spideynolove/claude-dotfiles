@@ -1,29 +1,36 @@
 # RTK - Rust Token Killer
 
-**Usage**: Token-optimized CLI proxy (60-90% savings on dev operations)
+**Scope**: High-output commands only — build, test, log, git diffs. NOT discovery or file-reading commands.
 
-## Meta Commands (always use rtk directly)
+## What RTK handles (hook intercepts these)
+
+Build, test, CI, and noisy-output commands:
+- `git log`, `git diff`, `git status` — compact summaries
+- `cargo build/test`, `npm run build`, `pytest`, `jest`, `vitest` — failures only
+- `docker`, `kubectl`, `pnpm`, `dotnet` — stripped noise
+- `tsc`, `next build`, `eslint` — grouped errors
+
+## What RTK does NOT handle (excluded from hook)
+
+Discovery and source-of-truth commands pass through natively:
+- `find`, `ls` — file discovery: paths must be exact, no shortening
+- `grep`, `rg` — content search: full context and line numbers required
+- `cat`, `head`, `tail` — file reading: exact content matters
+- `which`, `type`, `realpath`, `readlink`, `stat`, `file` — path/command resolution
+
+Excluded via `[hooks] exclude_commands` in `~/.config/rtk/config.toml`.
+
+## Meta Commands
 
 ```bash
 rtk gain              # Show token savings analytics
 rtk gain --history    # Show command usage history with savings
-rtk discover          # Analyze Claude Code history for missed opportunities
 rtk proxy <cmd>       # Execute raw command without filtering (for debugging)
 ```
 
-## Installation Verification
-
-```bash
-rtk --version         # Should show: rtk X.Y.Z
-rtk gain              # Should work (not "command not found")
-which rtk             # Verify correct binary
-```
-
-⚠️ **Name collision**: If `rtk gain` fails, you may have reachingforthejack/rtk (Rust Type Kit) installed instead.
-
 ## Hook-Based Usage
 
-All other commands are automatically rewritten by the Claude Code hook.
-Example: `git status` → `rtk git status` (transparent, 0 tokens overhead)
+The Claude Code PreToolUse hook (`rtk hook claude`) intercepts Bash commands automatically.
+Discovery commands are excluded — they run natively without RTK rewriting.
 
-Refer to CLAUDE.md for full command reference.
+Refer to CLAUDE.md for tool selection policy.

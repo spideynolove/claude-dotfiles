@@ -222,6 +222,18 @@ if ! command -v rtk >/dev/null 2>&1; then
 else
     echo "  rtk already installed"
 fi
+# Exclude discovery commands from RTK hook — runs whether rtk is new or existing
+python3 - <<'PYEOF'
+import re, os
+path = os.path.expanduser("~/.config/rtk/config.toml")
+exclude = '["find", "ls", "grep", "rg", "cat", "head", "tail", "which", "type", "realpath", "readlink", "stat", "file"]'
+with open(path) as f:
+    content = f.read()
+content = re.sub(r'(exclude_commands\s*=\s*)\[.*?\]', rf'\1{exclude}', content)
+with open(path, "w") as f:
+    f.write(content)
+print("  rtk exclude_commands configured: discovery commands pass through natively")
+PYEOF
 
 if ! command -v tilth >/dev/null 2>&1; then
     echo "  installing tilth..."
@@ -287,6 +299,6 @@ echo "Next steps:"
 echo "  1. Restart Claude Code / Codex / OpenCode to pick up settings + hooks"
 echo "  2. Per project: cd <project> && code-review-graph build"
 echo "  3. Verify hooks: /context-mode:ctx-doctor in a new session"
-echo "  4. Verify RTK:   rtk gain"
+echo "  4. Verify RTK:   rtk gain  (only build/test/log commands should appear)"
 echo "  5. Before switching PCs: bash sync-history.sh push"
 echo "  6. After arriving on new PC: bash install.sh && bash sync-history.sh pull"

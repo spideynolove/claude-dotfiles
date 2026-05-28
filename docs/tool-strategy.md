@@ -22,7 +22,7 @@ The default tool stack should keep always-on surface area small and route heavie
 
 | Layer | Default owner | Scope |
 |---|---|---|
-| Shell output reduction | `rtk` | Claude Code, Codex, OpenCode hook equivalents |
+| Shell output reduction | `rtk` | Build/test/log only; discovery commands (`find`, `ls`, `grep`, etc.) excluded from hook |
 | Duplicate-call prevention | `dedup.py` | Claude Code and Codex hooks |
 | Claude session continuity | `context-mode` | Claude Code only |
 | Lightweight code navigation | `tilth` | Claude Code default when no graph is built |
@@ -58,7 +58,7 @@ Use this order:
 |---|---|
 | CRG graph exists and status is healthy | `code-review-graph` |
 | Claude Code without a CRG graph | `tilth` |
-| Codex/OpenCode without a CRG graph | Native search or `rg` through RTK |
+| Codex/OpenCode without a CRG graph | Native search or `rg` (excluded from RTK hook) |
 | Past memory or decisions | Native memory first; token-savior only by explicit workflow |
 
 ### `code-review-graph` gate
@@ -127,8 +127,8 @@ Keep these active by default:
 
 | Endpoint | Always-on |
 |---|---|
-| Claude Code | `rtk`, `dedup.py`, `context-mode`, `code-review-graph`, `tilth`, `codex-plugin-cc` |
-| Codex | native memories, `rtk` hook, `dedup.py`, `code-review-graph` |
+| Claude Code | `rtk` (build/test/log scope), `dedup.py`, `context-mode`, `code-review-graph`, `tilth`, `codex-plugin-cc` |
+| Codex | native memories, `rtk` (build/test/log scope), `dedup.py`, `code-review-graph` |
 | OpenCode | RTK hook equivalent, DCP if installed, code-review-graph via CLI or skill |
 | Gemini | code-review-graph MCP wiring |
 
@@ -179,7 +179,7 @@ Use Haiku as the default executor when the work is bounded enough to verify mech
 | Ambiguous architecture, cross-service design, high-risk migrations | Sonnet or Opus-level reasoning before execution |
 | Final quality challenge | Codex review or adversarial review |
 
-The point is not that Haiku is always better than Sonnet. The point is that cheap executors become viable when the process adds structure: CRG for code context, RTK/context-mode for token control, tests for evidence, and Codex as a separate reviewer.
+The point is not that Haiku is always better than Sonnet. The point is that cheap executors become viable when the process adds structure: CRG for code context, RTK (build/test/log) + context-mode for token control, tests for evidence, and Codex as a separate reviewer.
 
 ### Codex quality gate
 
@@ -212,7 +212,7 @@ Use endpoint-specific measurements before removing or promoting tools.
 | Endpoint | Measurement |
 |---|---|
 | Claude Code | `/context-mode:ctx-stats`, `/context-mode:ctx-doctor`, `rtk gain --history` |
-| Codex | hook logs, native memory behavior, `rtk gain --history` |
+| Codex | hook logs, native memory behavior, `rtk gain --history` (build/test/log only) |
 | OpenCode | DCP stats if the plugin is installed |
 | CRG | graph status, query usefulness, review/impact quality on built repos |
 
@@ -232,7 +232,7 @@ For code navigation comparison, choose one repo with a built graph and run the s
 | token-savior | Do not register as default MCP |
 | context-mode | Register in Claude Code |
 | tilth | Install for Claude Code |
-| RTK | Install and initialize hook support |
+| RTK | Install, initialize hook, set `exclude_commands` for discovery commands |
 | Codex | Keep native memories and CRG baseline |
 
 Verify each machine with:
@@ -240,7 +240,7 @@ Verify each machine with:
 ```bash
 claude mcp list
 codex mcp list
-rtk gain --history
+rtk gain --history   # verify only build/test/log commands are intercepted
 ```
 
 Expected Claude Code default MCP list: `context-mode` and `code-review-graph`, with no token-savior unless explicitly enabled for a memory workflow.

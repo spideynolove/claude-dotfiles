@@ -61,15 +61,17 @@ Before any commit:
 
 ## RTK - Rust Token Killer
 
-**Usage**: Token-optimized CLI proxy (60-90% savings on dev operations)
+**Scope**: Build, test, log, git diffs only. Discovery commands must run natively.
+
+Use `rtk` for noisy output commands:
+- `rtk git log`, `rtk npm run build`, `rtk pytest -q`, `rtk docker ps`
+
+Do NOT use `rtk` for discovery — paths and content must be exact:
+- `find`, `ls`, `grep`, `cat`, `head`, `tail`, `which`, `realpath`
 
 Meta commands:
-- `rtk gain` — Show token savings analytics
-- `rtk gain --history` — Show command usage history with savings
-- `rtk discover` — Analyze history for missed opportunities
-- `rtk proxy <cmd>` — Execute raw command without filtering
-
-Hook-based usage is automatic when configured via plugin.
+- `rtk gain` — token savings analytics
+- `rtk proxy <cmd>` — run raw command without filtering
 
 ## code-review-graph
 
@@ -122,10 +124,10 @@ Current hook policy (pending JS plugin implementation):
 | Event | Purpose |
 |-------|---------|
 | `session.created` | Load or build code-review-graph context |
-| `tool.execute.before` | Run duplicate-call guard and RTK bash rewrite |
+| `tool.execute.before` | Run duplicate-call guard and RTK rewrite (build/test/log only) |
 | `tool.execute.after` | Update code-review-graph after edit/write/bash |
 
-Prefer RTK wrappers for noisy commands when they preserve the needed evidence.
+Use RTK for noisy output commands only. Discovery commands (`find`, `ls`, `grep`, etc.) must run natively — RTK compression loses semantic precision needed for correct path and content resolution.
 
 `code-review-graph` and RTK are required baseline tools for this environment.
 

@@ -14,9 +14,11 @@
 
 ## RTK (`github.com/rtk-ai/rtk`)
 
-**What it does:** CLI proxy that rewrites common commands (git, cat, find, etc.) transparently through a hook, stripping noise before output reaches Claude's context. 60-90% token reduction on dev operations.
+**What it does:** CLI proxy that compresses noisy build/test/log output before it reaches Claude's context. 60-90% token reduction on high-output operations.
 
-**How installed:** Already in use globally via hook. Transparent — no invocation needed.
+**Scope:** Build, test, log, git diffs only. Discovery commands (`find`, `ls`, `grep`, `cat`, `which`, etc.) are excluded via `[hooks] exclude_commands` in `~/.config/rtk/config.toml` — they must run natively to preserve exact paths, line numbers, and full content.
+
+**How installed:** Active globally via hook. Excluded commands pass through natively with no overhead.
 
 **Privacy:** Zero telemetry, local-only. Confirmed safe.
 
@@ -24,7 +26,7 @@
 ```bash
 rtk gain              # token savings analytics
 rtk gain --history    # command history with savings
-rtk discover          # missed opportunities from Claude history
+rtk proxy <cmd>       # run raw command without filtering
 ```
 
 ---
@@ -203,7 +205,7 @@ If an explicit workflow needs token-savior MCP, register it temporarily with a n
 | Event | What fires |
 |---|---|
 | Session start | context-mode injects routing rules; code-review-graph reports graph status |
-| Edit/Write/Bash | RTK strips noise before output reaches Claude; context-mode sandboxes large outputs; code-review-graph incrementally updates graph |
+| Edit/Write/Bash | RTK compresses build/test/log output (discovery commands excluded); context-mode sandboxes large outputs; code-review-graph incrementally updates graph |
 | Before `/compact` | context-mode indexes session events to FTS5 |
 
 ### Explicit (Claude calls on demand, guided by CLAUDE.md routing)
@@ -243,7 +245,7 @@ Next session
 
 | Concern | Owner |
 |---|---|
-| Token reduction (command output) | RTK |
+| Token reduction (build/test/log output) | RTK (discovery commands excluded) |
 | Token reduction (tool output / context) | context-mode |
 | Token reduction (code reading) | tilth |
 | Code structure / call graph | code-review-graph |

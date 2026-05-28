@@ -1,18 +1,28 @@
 # RTK - Rust Token Killer (Codex CLI)
 
-**Usage**: Token-optimized CLI proxy for shell commands.
+**Scope**: High-output commands only — build, test, log, git diffs. NOT discovery or file-reading.
 
-## Rule
+## When to prefix with `rtk`
 
-Always prefix shell commands with `rtk`.
-
-Examples:
+Use `rtk` for commands with noisy output where compression is safe:
 
 ```bash
-rtk git status
+rtk git log --oneline -20
 rtk cargo test
 rtk npm run build
 rtk pytest -q
+rtk docker ps
+```
+
+## When NOT to use `rtk`
+
+Discovery and source-of-truth commands must run natively — RTK's semantic compression causes wrong inference:
+
+```bash
+find . -name "*.py"      # not: rtk find
+ls ~/.codex/             # not: rtk ls
+grep -r "hook" ~/.codex/ # not: rtk grep
+which rtk                # not: rtk which
 ```
 
 ## Meta Commands
